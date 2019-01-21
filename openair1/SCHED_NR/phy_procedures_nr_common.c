@@ -225,135 +225,106 @@ void nr_configure_css_dci_from_pdcch_config(nfapi_nr_dl_config_pdcch_parameters_
   
 
 //SearchSpace 38.213, Reference defs_nr_UE.h - 755-840 code 
+  uint8_t index_s, index_p;
+  uint8_t Kps, Ops;
+
+
   //searchSpaceId
-  search_space->search_space_id = 0;
+  if(search_space->search_space_id < 0) || (search_space->search_space_id < 40){
+    index_s = search_space->search_space_id; //s = 0 <= s < 40-1
+  }
 
   //controlResourceSetId
-  if(coreset->coreset_id != NULL){ 
-    search_space->coreset_id = coreset->coreset_id; //Value 0 or Value 1
+  search_space->coreset_id = coreset->coreset_id; 
+  if(search_space->search_space_id < 0) || (search_space->search_space_id < 12){
+    index_p = search_space->coreset_id; //p = 0 <= p < 12
   }
 
   //monitoringSlotPeriodicityAndOffset
-  //pdcch_params->nb_slots = search_space->slot_monitoring_offset; //output not sure.
-  pdcch_params->nb_slots = search_space->slot_monitoring_periodicity; //nr_sl1=1,nr_sl2=2,nr_sl4=4,nr_sl5=5,nr_sl8=8,nr_sl10=10,nr_sl16=16,nr_sl20=20,nr_sl40=40,nr_sl80=80,nr_sl160=160,nr_sl320=320,nr_sl640=640,nr_sl1280=1280,nr_sl2560=2560
-  
+  Ops = search_space->slot_monitoring_offset; 
+  Kps = search_space->slot_monitoring_periodicity; //nr_sl1=1,nr_sl2=2,nr_sl4=4,nr_sl5=5,nr_sl8=8,nr_sl10=10,nr_sl16=16,nr_sl20=20,nr_sl40=40,nr_sl80=80,nr_sl160=160,nr_sl320=320,nr_sl640=640,nr_sl1280=1280,nr_sl2560=2560
+  if(kps == Ops){
+    pdcch_params->nb_slots = search_space->slot_monitoring_periodicity;
+  }
+
   //duration
   pdcch_params->nb_ss_sets_per_slot = search_space->duration;
 
 
   //monitoringSymbolsWithinSlot
-  pdcch_params->first_symbol = search_space->monitoring_symbols_in_slot; //38.213 page.69
+  pdcch_params->first_symbol = search_space->monitoring_symbols_in_slot;
 
   //nrofCandidates
-  pdcch_params->aggregation_level = search_space->number_of_candidates[NFAPI_NR_MAX_NB_CCE_AGGREGATION_LEVELS]; 
+  pdcch_params->aggregation_level = (uint8_t)number_of_candidates[NFAPI_NR_MAX_NB_CCE_AGGREGATION_LEVELS - 1];
 
   //searchSpaceType
-  switch (search_space->search_space_type){
-      //Common_CSS
-      case NFAPI_NR_SEARCH_SPACE_TYPE_COMMON:
+  pdcch_params->search_space_type = search_space->search_space_type;
+  //Common_CSS
+  if (pdcch_params->search_space_type == NFAPI_NR_SEARCH_SPACE_TYPE_COMMON){
+    switch(search_space->css_formats_0_0_and_1_0){
+        case NFAPI_NR_RNTI_C:
+          pdcch_params->rnti_type = NFAPI_NR_RNTI_C;
+          break;
+        case NFAPI_NR_RNTI_CS:
+          pdcch_params->rnti_type = NFAPI_NR_RNTI_CS;
+          break;
+        case NFAPI_NR_RNTI_SP_CSI:
+          pdcch_params->rnti_type = NFAPI_NR_RNTI_SP_CSI;
+          break;
+        case NFAPI_NR_RNTI_RA:
+          pdcch_params->rnti_type = NFAPI_NR_RNTI_RA;
+          break;
+        case NFAPI_NR_RNTI_TC:
+          pdcch_params->rnti_type = NFAPI_NR_RNTI_TC;
+          break;
+        case NFAPI_NR_RNTI_P:
+          pdcch_params->rnti_type = NFAPI_NR_RNTI_P;
+          break;
+        case NFAPI_NR_RNTI_SI:
+          pdcch_params->rnti_type = NFAPI_NR_RNTI_SI;
+          break;
+        }
 
-          switch(search_space->css_formats_0_0_and_1_0){
-              pdcch_params->dci_format = search_space->css_formats_0_0_and_1_0;
-              case NFAPI_NR_RNTI_C:
-                  pdcch_params->rnti_type = NFAPI_NR_RNTI_C;
-                  break;
-              case NFAPI_NR_RNTI_CS:
-                  pdcch_params->rnti_type = NFAPI_NR_RNTI_CS;
-                  break;
-              case NFAPI_NR_RNTI_SP_CSI:
-                  pdcch_params->rnti_type = NFAPI_NR_RNTI_SP_CSI;
-                  break;
-              case NFAPI_NR_RNTI_RA:
-                  pdcch_params->rnti_type = NFAPI_NR_RNTI_RA;
-                  break;
-              case NFAPI_NR_RNTI_TC:
-                  pdcch_params->rnti_type = NFAPI_NR_RNTI_TC;
-                  break;
-              case NFAPI_NR_RNTI_P:
-                  pdcch_params->rnti_type = NFAPI_NR_RNTI_P;
-                  break;
-              case NFAPI_NR_RNTI_SI:
-                  pdcch_params->rnti_type = NFAPI_NR_RNTI_SI;
-                  break;
-          }
-          switch (search_space->css_format_2_0){
-              pdcch_params->dci_format = search_space->css_format_2_0;
-              pdcch_params->aggregation_level = 
-              case NFAPI_NR_RNTI_SFI:
-                  pdcch_params->rnti_type = NFAPI_NR_RNTI_SFI;
-                  break;
-          }
-          switch (search_space->css_format_2_1){
-              pdcch_params->dci_format = search_space->css_format_2_1;
-              case NFAPI_NR_RNTI_INT:
-                  pdcch_params->rnti_type = NFAPI_NR_RNTI_INT;
-                  break;
-          }
-          switch (search_space->css_format_2_2){
-              pdcch_params->dci_format = search_space->css_format_2_2;
-              case NFAPI_NR_RNTI_TPC_PUSCH:
-                  pdcch_params->rnti_type = NFAPI_NR_RNTI_TPC_PUSCH;
-                  break;
-              case NFAPI_NR_RNTI_TPC_PUCCH:
-                  pdcch_params->rnti_type = NFAPI_NR_RNTI_TPC_PUCCH;
-                  break;
-          }
-          switch (search_space->css_format_2_3){
-              pdcch_params->dci_format = search_space->css_format_2_3;
-              pdcch_params->nb_slots = search_space->srs_monitoring_periodicity;
-              case NFAPI_NR_RNTI_TPC_SRS:
-                  pdcch_params->rnti_type = NFAPI_NR_RNTI_TPC_SRS;
-                  break;
-          }
-      //Ue_Specific_USS
-      case NFAPI_NR_SEARCH_SPACE_TYPE_UE_SPECIFIC:
+    switch (search_space->css_format_2_0){
+        case NFAPI_NR_RNTI_SFI:
+          pdcch_params->rnti_type = NFAPI_NR_RNTI_SFI;
+          break;
+        }   
 
-          switch (search_space->uss_dci_formats){
-              pdcch_params->dci_format = search_space->uss_dci_formats
-              case NFAPI_NR_RNTI_C:
-                  pdcch_params->rnti_type = NFAPI_NR_RNTI_C;
-                  break;
-              case NFAPI_NR_RNTI_CS:
-                  pdcch_params->rnti_type = NFAPI_NR_RNTI_CS;
-                  break;
-              case NFAPI_NR_RNTI_SP_CSI:
-                  pdcch_params->rnti_type = NFAPI_NR_RNTI_SP_CSI;
-                  break;
-          }
+    switch (search_space->css_format_2_1){
+        case NFAPI_NR_RNTI_INT:
+          pdcch_params->rnti_type = NFAPI_NR_RNTI_INT;
+          break;
+        }  
+
+    switch (search_space->css_format_2_2){
+        case NFAPI_NR_RNTI_TPC_PUSCH:
+          pdcch_params->rnti_type = NFAPI_NR_RNTI_TPC_PUSCH;
+          break;
+        case NFAPI_NR_RNTI_TPC_PUCCH:
+          pdcch_params->rnti_type = NFAPI_NR_RNTI_TPC_PUCCH;
+          break;
+        }  
+
+    switch (search_space->css_format_2_3){
+        case NFAPI_NR_RNTI_TPC_SRS:
+          pdcch_params->rnti_type = NFAPI_NR_RNTI_TPC_SRS;
+          break;
+        } 
   }
 
-  /* ***Wrong code***
-  if (search_space->search_space_type == 0){
-    //Common_CSS
-    pdcch_params->search_space_type = search_space->search_space_type;
-    if(search_space->css_formats_0_0_and_1_0 == 0){ //Type0-"SI-RNTI, Type0A-SI-RNTI, Type1-RA-RNTI or TC-RNTI, Type2-P-RNTI, Type3-C-RNTI or CS-RNTI"
-      pdcch_params->dci_format = search_space->css_formats_0_0_and_1_0;
-    }
-    if(search_space->css_format_2_0 == 2){ //Type3-"SFI-RNTI"
-      pdcch_params->dci_format = search_space->css_format_2_0;
-      //Not SFI-Aggregation-LeveL
-      //pdcch_params->aggregation_level = search_space->number_of_candidates[NFAPI_NR_MAX_NB_CCE_AGGREGATION_LEVELS];
-    }
-    if(search_space->css_format_2_1 == 3){ //Type3-"INT-RNTI"
-      pdcch_params->dci_format = search_space->css_format_2_1;
-    }
-    if(search_space->css_format_2_2 == 4){ //Type3-"TPC-PUSCH_RNTI or TPC-PUCCH-RNTI"
-      pdcch_params->dci_format = search_space->css_format_2_2;
-    }
-    if(search_space->css_format_2_3 == 5){ //Type3-"TPC-SRS-RNTI"
-      pdcch_params->dci_format = search_space->css_format_2_3;
-      //Monitoring periodicity of SRS PDCCH in number of slots for DCI format 2-3
-      pdcch_params->nb_slots = search_space->srs_monitoring_periodicity; //mp1=1,mp2=2,mp4=4,mp5=5,mp8=8,mp10=10,mp16=16,mp20=20
+  //Ue_Specific_USS
+  if (pdcch_params->search_space_type == NFAPI_NR_SEARCH_SPACE_TYPE_UE_SPECIFIC){
+    switch (search_space->uss_dci_formats){
+        case NFAPI_NR_RNTI_C:
+          pdcch_params->rnti_type = NFAPI_NR_RNTI_C;
+          break;
+        case NFAPI_NR_RNTI_CS:
+          pdcch_params->rnti_type = NFAPI_NR_RNTI_CS;
+          break;
+        case NFAPI_NR_RNTI_SP_CSI:
+          pdcch_params->rnti_type = NFAPI_NR_RNTI_SP_CSI;
+          break;
+        }
   }
-  if (search_space->search_space_type == 1){
-    //Ue_Specific_USS
-    pdcch_params->search_space_type = search_space->search_space_type; 
-    if(search_space->uss_dci_formats == 0){ //DCI formats 0-0 and 1-0
-      pdcch_params->dci_format = search_space->uss_dci_formats 
-    }
-    if(search_space->uss_dci_formats == 1){ //DCI formats 0-1 and 1-1
-      pdcch_params->dci_format = search_space->uss_dci_formats
-    }
-  }
-  */
 }
