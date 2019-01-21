@@ -21,11 +21,11 @@
 
 /*! \file gNB_scheduler_primitives.c
  * \brief primitives used by gNB for BCH, RACH, ULSCH, DLSCH scheduling
- * \author  Navid Nikaein and Raymond Knopp, WEI-TAI CHEN
- * \date 2010 - 2014, 2018
- * \email: navid.nikaein@eurecom.fr, kroempa@gmail.com
+ * \author  Raymond Knopp, Guy De Souza
+ * \date 2018, 2019
+ * \email: knopp@eurecom.fr, desouza@eurecom.fr
  * \version 1.0
- * \company Eurecom, NTUST
+ * \company Eurecom
  * @ingroup _mac
 
  */
@@ -65,59 +65,452 @@ extern RAN_CONTEXT_t RC;
 
 extern int n_active_slices;
 
-int is_nr_UL_sf(NR_COMMON_channels_t * ccP, sub_frame_t subframeP){
-  // if FDD return dummy value
-  if (ccP->tdd_Config == NULL)
-    return (0);
+  // Note the 2 scs values in the table names represent resp. scs_common and pdcch_scs
+/// LUT for the number of symbols in the coreset indexed by coreset index (4 MSB rmsi_pdcch_config)
+uint8_t nr_coreset_nsymb_pdcch_type_0_scs_15_15[15] = {2,2,2,3,3,3,1,1,2,2,3,3,1,2,3};
+uint8_t nr_coreset_nsymb_pdcch_type_0_scs_15_30[14] = {2,2,2,2,3,3,3,3,1,1,2,2,3,3};
+uint8_t nr_coreset_nsymb_pdcch_type_0_scs_30_15_b40Mhz[9] = {1,1,2,2,3,3,1,2,3};
+uint8_t nr_coreset_nsymb_pdcch_type_0_scs_30_15_a40Mhz[9] = {1,2,3,1,1,2,2,3,3};
+uint8_t nr_coreset_nsymb_pdcch_type_0_scs_30_30_b40Mhz[16] = {2,2,2,2,2,3,3,3,3,3,1,1,1,2,2,2}; // below 40Mhz bw
+uint8_t nr_coreset_nsymb_pdcch_type_0_scs_30_30_a40Mhz[10] = {2,2,3,3,1,1,2,2,3,3}; // above 40Mhz bw
+uint8_t nr_coreset_nsymb_pdcch_type_0_scs_120_60[12] = {1,1,2,2,3,3,1,2,1,1,1,1};
 
-  switch (ccP->tdd_Config->subframeAssignment) {
-  case 1:
-    switch (subframeP) {
-    case 0:
-    case 4:
-    case 5:
-    case 9:
-      return (0);
+/// LUT for the number of RBs in the coreset indexed by coreset index
+uint8_t nr_coreset_rb_offset_pdcch_type_0_scs_15_15[15] = {0,2,4,0,2,4,12,16,12,16,12,16,38,38,38};
+uint8_t nr_coreset_rb_offset_pdcch_type_0_scs_15_30[14] = {5,6,7,8,5,6,7,8,18,20,18,20,18,20};
+uint8_t nr_coreset_rb_offset_pdcch_type_0_scs_30_15_b40Mhz[9] = {2,6,2,6,2,6,28,28,28};
+uint8_t nr_coreset_rb_offset_pdcch_type_0_scs_30_15_a40Mhz[9] = {4,4,4,0,56,0,56,0,56};
+uint8_t nr_coreset_rb_offset_pdcch_type_0_scs_30_30_b40Mhz[16] = {0,1,2,3,4,0,1,2,3,4,12,14,16,12,14,16};
+uint8_t nr_coreset_rb_offset_pdcch_type_0_scs_30_30_a40Mhz[10] = {0,4,0,4,0,28,0,28,0,28};
+int8_t  nr_coreset_rb_offset_pdcch_type_0_scs_120_60[12] = {0,8,0,8,0,8,28,28,-1,49,-1,97};
+int8_t  nr_coreset_rb_offset_pdcch_type_0_scs_120_120[8] = {0,4,14,14,-1,24,-1,48};
+int8_t  nr_coreset_rb_offset_pdcch_type_0_scs_240_120[8] = {0,8,0,8,-1,25,-1,49};
+
+/// LUT for monitoring occasions param O indexed by ss index (4 LSB rmsi_pdcch_config)
+  // Note: scaling is used to avoid decimal values for O and M, original values commented
+uint8_t nr_ss_param_O_type_0_mux1_FR1[16] = {0,0,2,2,5,5,7,7,0,5,0,0,2,2,5,5};
+uint8_t nr_ss_param_O_type_0_mux1_FR2[14] = {0,0,5,5,5,5,0,5,5,15,15,15,0,5}; //{0,0,2.5,2.5,5,5,0,2.5,5,7.5,7.5,7.5,0,5}
+uint8_t nr_ss_scale_O_mux1_FR2[14] = {0,0,1,1,0,0,0,1,0,1,1,1,0,0};
+
+/// LUT for number of SS sets per slot indexed by ss index
+uint8_t nr_ss_sets_per_slot_type_0_FR1[16] = {1,2,1,2,1,2,1,2,1,1,1,1,1,1,1,1};
+uint8_t nr_ss_sets_per_slot_type_0_FR2[14] = {1,2,1,2,1,2,2,2,2,1,2,2,1,1};
+
+/// LUT for monitoring occasions param M indexed by ss index
+uint8_t nr_ss_param_M_type_0_mux1_FR1[16] = {1,1,1,1,1,1,1,1,2,2,1,1,1,1,1,1}; //{1,0.5,1,0.5,1,0.5,1,0.5,2,2,1,1,1,1,1,1}
+uint8_t nr_ss_scale_M_mux1_FR1[16] = {0,1,0,1,0,1,0,1,0,0,0,0,0,0,0,0};
+uint8_t nr_ss_param_M_type_0_mux1_FR2[14] = {1,1,1,1,1,1,1,1,1,1,1,1,2,2}; //{1,0.5,1,0.5,1,0.5,0.5,0.5,0.5,1,0.5,0.5,2,2}
+uint8_t nr_ss_scale_M_mux1_FR2[14] = {0,1,0,1,0,1,1,1,1,0,1,1,0,0};
+
+/// LUT for SS first symbol index indexed by ss index
+uint8_t nr_ss_first_symb_idx_type_0_mux1_FR1[8] = {0,0,1,2,1,2,1,2};
+  // Mux pattern type 2
+uint8_t nr_ss_first_symb_idx_scs_120_60_mux2[4] = {0,1,6,7};
+uint8_t nr_ss_first_symb_idx_scs_240_120_set1_mux2[6] = {0,1,2,3,0,1};
+  // Mux pattern type 3
+uint8_t nr_ss_first_symb_idx_scs_120_120_mux3[4] = {4,8,2,6};
+
+
+
+int is_nr_UL_slot(NR_COMMON_channels_t * ccP, int slot){
+
+    return (0);
+}
+
+void nr_configure_css_dci_initial(nfapi_nr_dl_config_pdcch_parameters_rel15_t* pdcch_params,
+				  nr_scs_e scs_common,
+				  nr_scs_e pdcch_scs,
+				  nr_frequency_range_e freq_range,
+				  uint8_t rmsi_pdcch_config,
+				  uint8_t ssb_idx,
+          uint8_t k_ssb,
+          uint16_t sfn_ssb,
+          uint8_t n_ssb, /*slot index overlapping the corresponding SSB index*/
+				  uint16_t nb_slots_per_frame,
+				  uint16_t N_RB)
+{
+  uint8_t O, M;
+  uint8_t ss_idx = rmsi_pdcch_config&0xf;
+  uint8_t cset_idx = (rmsi_pdcch_config>>4)&0xf;
+  uint8_t mu = scs_common;
+  uint8_t O_scale=0, M_scale=0; // used to decide if the values of O and M need to be divided by 2
+
+  /// Coreset params
+  switch(scs_common) {
+
+    case kHz15:
+
+      switch(pdcch_scs) {
+        case kHz15:
+          AssertFatal(cset_idx<15,"Coreset index %d reserved for scs kHz15/kHz15\n", cset_idx);
+          pdcch_params->mux_pattern = NFAPI_NR_SSB_AND_CSET_MUX_PATTERN_TYPE1;
+          pdcch_params->n_rb = (cset_idx < 6)? 24 : (cset_idx < 12)? 48 : 96;
+          pdcch_params->n_symb = nr_coreset_nsymb_pdcch_type_0_scs_15_15[cset_idx];
+          pdcch_params->rb_offset = nr_coreset_rb_offset_pdcch_type_0_scs_15_15[cset_idx];
+        break;
+
+        case kHz30:
+          AssertFatal(cset_idx<14,"Coreset index %d reserved for scs kHz15/kHz30\n", cset_idx);
+          pdcch_params->mux_pattern = NFAPI_NR_SSB_AND_CSET_MUX_PATTERN_TYPE1;
+          pdcch_params->n_rb = (cset_idx < 8)? 24 : 48;
+          pdcch_params->n_symb = nr_coreset_nsymb_pdcch_type_0_scs_15_30[cset_idx];
+          pdcch_params->rb_offset = nr_coreset_rb_offset_pdcch_type_0_scs_15_15[cset_idx];
+        break;
+
+        default:
+            AssertFatal(1==0,"Invalid scs_common/pdcch_scs combination %d/%d \n", scs_common, pdcch_scs);
+
+      }
       break;
-    case 2:
-    case 3:
-    case 7:
-    case 8:
-      return (1);
+
+    case kHz30:
+
+      if (N_RB < 106) { // Minimum 40Mhz bandwidth not satisfied
+        switch(pdcch_scs) {
+          case kHz15:
+            AssertFatal(cset_idx<9,"Coreset index %d reserved for scs kHz30/kHz15\n", cset_idx);
+            pdcch_params->mux_pattern = NFAPI_NR_SSB_AND_CSET_MUX_PATTERN_TYPE1;
+            pdcch_params->n_rb = (cset_idx < 10)? 48 : 96;
+            pdcch_params->n_symb = nr_coreset_nsymb_pdcch_type_0_scs_30_15_b40Mhz[cset_idx];
+            pdcch_params->rb_offset = nr_coreset_rb_offset_pdcch_type_0_scs_30_15_b40Mhz[cset_idx];
+          break;
+
+          case kHz30:
+            pdcch_params->mux_pattern = NFAPI_NR_SSB_AND_CSET_MUX_PATTERN_TYPE1;
+            pdcch_params->n_rb = (cset_idx < 6)? 24 : 48;
+            pdcch_params->n_symb = nr_coreset_nsymb_pdcch_type_0_scs_30_30_b40Mhz[cset_idx];
+            pdcch_params->rb_offset = nr_coreset_rb_offset_pdcch_type_0_scs_30_30_b40Mhz[cset_idx];
+          break;
+
+          default:
+            AssertFatal(1==0,"Invalid scs_common/pdcch_scs combination %d/%d \n", scs_common, pdcch_scs);
+        }
+      }
+
+      else { // above 40Mhz
+        switch(pdcch_scs) {
+          case kHz15:
+            AssertFatal(cset_idx<9,"Coreset index %d reserved for scs kHz30/kHz15\n", cset_idx);
+            pdcch_params->mux_pattern = NFAPI_NR_SSB_AND_CSET_MUX_PATTERN_TYPE1;
+            pdcch_params->n_rb = (cset_idx < 3)? 48 : 96;
+            pdcch_params->n_symb = nr_coreset_nsymb_pdcch_type_0_scs_30_15_a40Mhz[cset_idx];
+            pdcch_params->rb_offset = nr_coreset_rb_offset_pdcch_type_0_scs_30_15_a40Mhz[cset_idx];
+          break;
+
+          case kHz30:
+            AssertFatal(cset_idx<10,"Coreset index %d reserved for scs kHz30/kHz30\n", cset_idx);
+            pdcch_params->mux_pattern = NFAPI_NR_SSB_AND_CSET_MUX_PATTERN_TYPE1;
+            pdcch_params->n_rb = (cset_idx < 4)? 24 : 48;
+            pdcch_params->n_symb = nr_coreset_nsymb_pdcch_type_0_scs_30_30_a40Mhz[cset_idx];
+            pdcch_params->rb_offset =  nr_coreset_rb_offset_pdcch_type_0_scs_30_30_a40Mhz[cset_idx];
+          break;
+
+          default:
+            AssertFatal(1==0,"Invalid scs_common/pdcch_scs combination %d/%d \n", scs_common, pdcch_scs);
+        }
+      }
       break;
-    default:
-      return (0);
+
+    case kHz120:
+      switch(pdcch_scs) {
+        case kHz60:
+          AssertFatal(cset_idx<12,"Coreset index %d reserved for scs kHz120/kHz60\n", cset_idx);
+          pdcch_params->mux_pattern = (cset_idx < 8)?NFAPI_NR_SSB_AND_CSET_MUX_PATTERN_TYPE1 : NFAPI_NR_SSB_AND_CSET_MUX_PATTERN_TYPE2;
+          pdcch_params->n_rb = (cset_idx < 6)? 48 : (cset_idx < 8)? 96 : (cset_idx < 10)? 48 : 96;
+          pdcch_params->n_symb = nr_coreset_nsymb_pdcch_type_0_scs_120_60[cset_idx];
+          pdcch_params->rb_offset = (nr_coreset_rb_offset_pdcch_type_0_scs_120_60[cset_idx]>0)?nr_coreset_rb_offset_pdcch_type_0_scs_120_60[cset_idx] :
+          (k_ssb == 0)? -41 : -42;
+        break;
+
+        case kHz120:
+          AssertFatal(cset_idx<8,"Coreset index %d reserved for scs kHz120/kHz120\n", cset_idx);
+          pdcch_params->mux_pattern = (cset_idx < 4)?NFAPI_NR_SSB_AND_CSET_MUX_PATTERN_TYPE1 : NFAPI_NR_SSB_AND_CSET_MUX_PATTERN_TYPE3;
+          pdcch_params->n_rb = (cset_idx < 2)? 24 : (cset_idx < 4)? 48 : (cset_idx < 6)? 24 : 48;
+          pdcch_params->n_symb = (cset_idx == 2)? 1 : 2;
+          pdcch_params->rb_offset = (nr_coreset_rb_offset_pdcch_type_0_scs_120_120[cset_idx]>0)? nr_coreset_rb_offset_pdcch_type_0_scs_120_120[cset_idx] :
+          (k_ssb == 0)? -20 : -21;
+        break;
+
+        default:
+            AssertFatal(1==0,"Invalid scs_common/pdcch_scs combination %d/%d \n", scs_common, pdcch_scs);
+      }
+    break;
+
+    case kHz240:
+    switch(pdcch_scs) {
+      case kHz60:
+        AssertFatal(cset_idx<4,"Coreset index %d reserved for scs kHz240/kHz60\n", cset_idx);
+        pdcch_params->mux_pattern = NFAPI_NR_SSB_AND_CSET_MUX_PATTERN_TYPE1;
+        pdcch_params->n_rb = 96;
+        pdcch_params->n_symb = (cset_idx < 2)? 1 : 2;
+        pdcch_params->rb_offset = (cset_idx&1)? 16 : 0;
       break;
+
+      case kHz120:
+        AssertFatal(cset_idx<8,"Coreset index %d reserved for scs kHz240/kHz120\n", cset_idx);
+        pdcch_params->mux_pattern = (cset_idx < 4)? NFAPI_NR_SSB_AND_CSET_MUX_PATTERN_TYPE1 : NFAPI_NR_SSB_AND_CSET_MUX_PATTERN_TYPE2;
+        pdcch_params->n_rb = (cset_idx < 4)? 48 : (cset_idx < 6)? 24 : 48;
+        pdcch_params->n_symb = ((cset_idx==2)||(cset_idx==3))? 2 : 1;
+        pdcch_params->rb_offset = (nr_coreset_rb_offset_pdcch_type_0_scs_240_120[cset_idx]>0)? nr_coreset_rb_offset_pdcch_type_0_scs_240_120[cset_idx] :
+        (k_ssb == 0)? -41 : -42;
+      break;
+
+      default:
+          AssertFatal(1==0,"Invalid scs_common/pdcch_scs combination %d/%d \n", scs_common, pdcch_scs);
     }
     break;
-  case 3:
-    if ((subframeP <= 1) || (subframeP >= 5))
-      return (0);
-    else if ((subframeP > 1) && (subframeP < 5))
-      return (1);
-    else
-      AssertFatal(1 == 0, "Unknown subframe number\n");
-    break;
-  case 4:
-    if ((subframeP <= 1) || (subframeP >= 4))
-      return (0);
-    else if ((subframeP > 1) && (subframeP < 4))
-      return (1);
-    else
-      AssertFatal(1 == 0, "Unknown subframe number\n");
-    break;
-  case 5:
-    if ((subframeP <= 1) || (subframeP >= 3))
-      return (0);
-    else if ((subframeP > 1) && (subframeP < 3))
-      return (1);
-    else
-      AssertFatal(1 == 0, "Unknown subframe number\n");
-    break;
+
   default:
-    AssertFatal(1 == 0,
-    "subframe %d Unsupported TDD configuration %d\n",
-    subframeP, (int) ccP->tdd_Config->subframeAssignment);
-    break;
+    AssertFatal(1==0,"Invalid common subcarrier spacing %d\n", scs_common);
+
   }
+
+  /// Search space params
+  switch(pdcch_params->mux_pattern) {
+
+    case NFAPI_NR_SSB_AND_CSET_MUX_PATTERN_TYPE1:
+      if (freq_range == nr_FR1) {
+        O = nr_ss_param_O_type_0_mux1_FR1[ss_idx];
+        pdcch_params->nb_ss_sets_per_slot = nr_ss_sets_per_slot_type_0_FR1[ss_idx];
+        M = nr_ss_param_M_type_0_mux1_FR1[ss_idx];
+        M_scale = nr_ss_scale_M_mux1_FR1[ss_idx];
+        pdcch_params->first_symbol = (ss_idx < 8)? ( (ssb_idx&1)? pdcch_params->n_symb : 0 ) : nr_ss_first_symb_idx_type_0_mux1_FR1[ss_idx - 8];
+      }
+
+      else {
+        AssertFatal(ss_idx<14 ,"Invalid search space index for multiplexing type 1 and FR2 %d\n", ss_idx);
+        O = nr_ss_param_O_type_0_mux1_FR2[ss_idx];
+        O_scale = nr_ss_scale_O_mux1_FR2[ss_idx];
+        pdcch_params->nb_ss_sets_per_slot = nr_ss_sets_per_slot_type_0_FR2[ss_idx];
+        M = nr_ss_param_M_type_0_mux1_FR2[ss_idx];
+        M_scale = nr_ss_scale_M_mux1_FR2[ss_idx];
+        pdcch_params->first_symbol = (ss_idx < 12)? ( (ss_idx&1)? 7 : 0 ) : 0;
+      }
+      pdcch_params->nb_slots = 2;
+      pdcch_params->sfn_mod2 = (CEILIDIV( (((O<<mu)>>O_scale) + ((ssb_idx*M)>>M_scale)), nb_slots_per_frame ) & 1)? 1 : 0;
+      pdcch_params->first_slot = (((O<<mu)>>O_scale) + ((ssb_idx*M)>>M_scale)) % nb_slots_per_frame;
+
+    break;
+
+    case NFAPI_NR_SSB_AND_CSET_MUX_PATTERN_TYPE2:
+      AssertFatal( ((scs_common==kHz120)&&(pdcch_scs==kHz60)) || ((scs_common==kHz240)&&(pdcch_scs==kHz120)),
+      "Invalid scs_common/pdcch_scs combination %d/%d for Mux type 2\n", scs_common, pdcch_scs );
+      AssertFatal(ss_idx==0, "Search space index %d reserved for scs_common/pdcch_scs combination %d/%d", ss_idx, scs_common, pdcch_scs);
+
+      pdcch_params->nb_slots = 1;
+
+      if ((scs_common==kHz120)&&(pdcch_scs==kHz60)) {
+        pdcch_params->first_symbol = nr_ss_first_symb_idx_scs_120_60_mux2[ssb_idx&3];
+        // Missing in pdcch_params sfn_C and n_C here and in else case
+      }
+      else {
+        pdcch_params->first_symbol = ((ssb_idx&7)==4)?12 : ((ssb_idx&7)==4)?13 : nr_ss_first_symb_idx_scs_240_120_set1_mux2[ssb_idx&7]; //???
+      }
+
+    break;
+
+    case NFAPI_NR_SSB_AND_CSET_MUX_PATTERN_TYPE3:
+      AssertFatal( (scs_common==kHz120)&&(pdcch_scs==kHz120),
+      "Invalid scs_common/pdcch_scs combination %d/%d for Mux type 3\n", scs_common, pdcch_scs );
+      AssertFatal(ss_idx==0, "Search space index %d reserved for scs_common/pdcch_scs combination %d/%d", ss_idx, scs_common, pdcch_scs);
+
+      pdcch_params->first_symbol = nr_ss_first_symb_idx_scs_120_120_mux3[ssb_idx&3];
+
+    break;
+
+    default:
+      AssertFatal(1==0, "Invalid SSB and coreset multiplexing pattern %d\n", pdcch_params->mux_pattern);
+  }
+  pdcch_params->config_type = NFAPI_NR_CSET_CONFIG_MIB_SIB1;
+  pdcch_params->cr_mapping_type = NFAPI_NR_CCE_REG_MAPPING_INTERLEAVED;
+  pdcch_params->precoder_granularity = NFAPI_NR_CSET_SAME_AS_REG_BUNDLE;
+  pdcch_params->reg_bundle_size = 6;
+  pdcch_params->interleaver_size = 2;
+  // set initial banwidth part to full bandwidth
+  pdcch_params->n_RB_BWP = N_RB;
+
+
+}
+
+
+void nr_configure_css_dci_from_pdcch_config(nfapi_nr_dl_config_pdcch_parameters_rel15_t* pdcch_params,
+                                            nfapi_nr_coreset_t* coreset,
+                                            nfapi_nr_search_space_t* search_space) {
+//coreset
+
+  //ControlResourceSetId
+  pdcch_params->config_type = coreset->coreset_id;
+  
+  //frequencyDomainResources
+  uint64_t mask = 0x0;
+  uint8_t i;
+  int32_t num_rbs         = {24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 48, 48, 48, 48, 48, 48};
+  
+  for(i=0; i<(num_rbs/6); ++i){
+	mask = mask >> 1;
+	mask = mask | 0x100000000000;
+  }
+  coreset->frequency_domain_resources = mask;
+  pdcch_params->n_symb    = { 2,  2,  2,  2,  2,  3,  3,  3,  3,  3,  1,  1,  1,  2,  2,  2};
+  pdcch_params->rb_offset = { 0,  1,  2,  3,  4,  0,  1,  2,  3,  4, 12, 14, 16, 12, 14, 16};
+
+  //duration
+  pdcch_params->n_symb = coreset->duration;
+
+  //cce-REG-MappingType 
+  switch (coreset->cce_reg_mapping_type) {
+    case NFAPI_NR_CCE_REG_MAPPING_NON_INTERLEAVED: //Non_interleaved
+	  pdcch_params->cr_mapping_type = nfapi_nr_cce_reg_mapping_type_e->NFAPI_NR_CCE_REG_MAPPING_NON_INTERLEAVED;
+      pdcch_params->reg_bundle_size = 0;
+      pdcch_params->interleaver_size = 0;
+      pdcch_params->shift_index = 0;
+      break;
+    case NFAPI_NR_CCE_REG_MAPPING_INTERLEAVED: //interleaved
+	  pdcch_params->cr_mapping_type = nfapi_nr_cce_reg_mapping_type_e->NFAPI_NR_CCE_REG_MAPPING_INTERLEAVED;
+      pdcch_params->reg_bundle_size = coreset->reg_bundle_size;
+      pdcch_params->interleaver_size = coreset->interleaver_size;
+      pdcch_params->shift_index = coreset->shift_index;
+      break;
+  }
+  //precoderGranularity
+  pdcch_params->precoder_granularity = coreset->precoder_granularity;
+/*
+  if (tci_present_in_dci == tciPresentInDCI_t->tciPresentInDCI_enabled){
+    //not sure information
+  }
+*/
+  //pdcch-DMRS-ScramblingID
+  pdcch_params->scrambling_id = coreset->dmrs_scrambling_id;
+
+  
+  
+
+//SearchSpace 38.213, Reference defs_nr_UE.h - 755-840 code 
+  uint8_t index_s, index_p;
+  uint8_t Kps, Ops;
+
+
+  //searchSpaceId
+  if(search_space->search_space_id < 0) || (search_space->search_space_id < 40){
+    index_s = search_space->search_space_id; //s = 0 <= s < 40-1
+  }
+
+  //controlResourceSetId
+  search_space->coreset_id = coreset->coreset_id; 
+  if(search_space->search_space_id < 0) || (search_space->search_space_id < 12){
+    index_p = search_space->coreset_id; //p = 0 <= p < 12
+  }
+
+  //monitoringSlotPeriodicityAndOffset
+  Ops = search_space->slot_monitoring_offset; 
+  Kps = search_space->slot_monitoring_periodicity; //nr_sl1=1,nr_sl2=2,nr_sl4=4,nr_sl5=5,nr_sl8=8,nr_sl10=10,nr_sl16=16,nr_sl20=20,nr_sl40=40,nr_sl80=80,nr_sl160=160,nr_sl320=320,nr_sl640=640,nr_sl1280=1280,nr_sl2560=2560
+  if(kps == Ops){
+    pdcch_params->nb_slots = search_space->slot_monitoring_periodicity;
+  }
+
+  //duration
+  pdcch_params->nb_ss_sets_per_slot = search_space->duration;
+
+
+  //monitoringSymbolsWithinSlot
+  pdcch_params->first_symbol = search_space->monitoring_symbols_in_slot;
+
+  //nrofCandidates
+  pdcch_params->aggregation_level = (uint8_t)number_of_candidates[NFAPI_NR_MAX_NB_CCE_AGGREGATION_LEVELS - 1];
+
+  //searchSpaceType
+  pdcch_params->search_space_type = search_space->search_space_type;
+  //Common_CSS
+  if (pdcch_params->search_space_type == NFAPI_NR_SEARCH_SPACE_TYPE_COMMON){
+    switch(search_space->css_formats_0_0_and_1_0){
+        case NFAPI_NR_RNTI_C:
+          pdcch_params->rnti_type = NFAPI_NR_RNTI_C;
+          break;
+        case NFAPI_NR_RNTI_CS:
+          pdcch_params->rnti_type = NFAPI_NR_RNTI_CS;
+          break;
+        case NFAPI_NR_RNTI_SP_CSI:
+          pdcch_params->rnti_type = NFAPI_NR_RNTI_SP_CSI;
+          break;
+        case NFAPI_NR_RNTI_RA:
+          pdcch_params->rnti_type = NFAPI_NR_RNTI_RA;
+          break;
+        case NFAPI_NR_RNTI_TC:
+          pdcch_params->rnti_type = NFAPI_NR_RNTI_TC;
+          break;
+        case NFAPI_NR_RNTI_P:
+          pdcch_params->rnti_type = NFAPI_NR_RNTI_P;
+          break;
+        case NFAPI_NR_RNTI_SI:
+          pdcch_params->rnti_type = NFAPI_NR_RNTI_SI;
+          break;
+        }
+
+    switch (search_space->css_format_2_0){
+        case NFAPI_NR_RNTI_SFI:
+          pdcch_params->rnti_type = NFAPI_NR_RNTI_SFI;
+          break;
+        }   
+
+    switch (search_space->css_format_2_1){
+        case NFAPI_NR_RNTI_INT:
+          pdcch_params->rnti_type = NFAPI_NR_RNTI_INT;
+          break;
+        }  
+
+    switch (search_space->css_format_2_2){
+        case NFAPI_NR_RNTI_TPC_PUSCH:
+          pdcch_params->rnti_type = NFAPI_NR_RNTI_TPC_PUSCH;
+          break;
+        case NFAPI_NR_RNTI_TPC_PUCCH:
+          pdcch_params->rnti_type = NFAPI_NR_RNTI_TPC_PUCCH;
+          break;
+        }  
+
+    switch (search_space->css_format_2_3){
+        case NFAPI_NR_RNTI_TPC_SRS:
+          pdcch_params->rnti_type = NFAPI_NR_RNTI_TPC_SRS;
+          break;
+        } 
+  }
+
+  //Ue_Specific_USS
+  if (pdcch_params->search_space_type == NFAPI_NR_SEARCH_SPACE_TYPE_UE_SPECIFIC){
+    switch (search_space->uss_dci_formats){
+        case NFAPI_NR_RNTI_C:
+          pdcch_params->rnti_type = NFAPI_NR_RNTI_C;
+          break;
+        case NFAPI_NR_RNTI_CS:
+          pdcch_params->rnti_type = NFAPI_NR_RNTI_CS;
+          break;
+        case NFAPI_NR_RNTI_SP_CSI:
+          pdcch_params->rnti_type = NFAPI_NR_RNTI_SP_CSI;
+          break;
+        }
+  }
+}
+
+int get_dlscs(nfapi_nr_config_request_t *cfg) {
+
+  return(cfg->rf_config.dl_subcarrierspacing.value);
+}
+
+
+int get_ulscs(nfapi_nr_config_request_t *cfg) {
+
+  return(cfg->rf_config.ul_subcarrierspacing.value);
+} 
+
+int get_spf(nfapi_nr_config_request_t *cfg) {
+
+  int mu = cfg->rf_config.dl_subcarrierspacing.value;
+  AssertFatal(mu>=0&&mu<4,"Illegal scs %d\n",mu);
+
+  return(10 * (1<<mu));
+} 
+
+int to_absslot(nfapi_nr_config_request_t *cfg,int frame,int slot) {
+
+  return(get_spf(cfg)*frame) + slot; 
+
 }

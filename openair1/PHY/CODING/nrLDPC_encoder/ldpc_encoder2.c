@@ -211,7 +211,6 @@ int ldpc_encoder_optim(unsigned char *test_input,unsigned char *channel_input,sh
   int simd_size;
 
   //determine number of bits in codeword
-  //determine number of bits in codeword
    //if (block_length>3840)
    if (BG==1)
      {
@@ -256,7 +255,7 @@ int ldpc_encoder_optim(unsigned char *test_input,unsigned char *channel_input,sh
 #endif
 
   if ((Zc&31) > 0) simd_size = 16;
-  else          simd_size = 32;
+  else simd_size = 32;
 
   unsigned char c[22*Zc] __attribute__((aligned(32))); //padded input, unpacked, max size
   unsigned char d[46*Zc] __attribute__((aligned(32))); //coded parity part output, unpacked, max size
