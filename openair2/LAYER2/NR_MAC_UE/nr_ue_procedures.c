@@ -36,6 +36,8 @@
 #include "assertions.h"
 #include "PHY/defs_nr_UE.h"
 
+#define DEBUG_MIB
+
 #include <stdio.h>
 #include <math.h>
 
@@ -204,41 +206,42 @@ int8_t nr_ue_decode_mib(
 
     printf("[L2][MAC] decode mib\n");
 
-	NR_UE_MAC_INST_t *mac = get_mac_inst(module_id);
+    NR_UE_MAC_INST_t *mac = get_mac_inst(module_id);
 
     nr_mac_rrc_data_ind_ue( module_id, cc_id, gNB_index, NR_BCCH_BCH, (uint8_t *) pduP, 3 );    //  fixed 3 bytes MIB PDU
     
     AssertFatal(mac->mib != NULL, "nr_ue_decode_mib() mac->mib == NULL\n");
-    //if(mac->mib != NULL){
-	    uint16_t frame = (mac->mib->systemFrameNumber.buf[0] >> mac->mib->systemFrameNumber.bits_unused);
-	    uint16_t frame_number_4lsb = 0;
-      for (int i=0; i<4; i++)
-        frame_number_4lsb |= ((extra_bits>>i)&1)<<(3-i);
-	    uint8_t half_frame_bit = ( extra_bits >> 4 ) & 0x1;               //	extra bits[4]
-	    uint8_t ssb_subcarrier_offset_msb = ( extra_bits >> 5 ) & 0x1;    //	extra bits[5]
-	    
-	    uint8_t ssb_subcarrier_offset = (uint8_t)mac->mib->ssb_SubcarrierOffset;
 
-	    //uint32_t ssb_index = 0;    //  TODO: ssb_index should obtain from L1 in case Lssb != 64
-
-	    frame = frame << 4;
-	    frame = frame | frame_number_4lsb;
-
-	    if(ssb_length == 64){
-	    	ssb_index = ssb_index & (( extra_bits >> 2 ) & 0x1C );    //	{ extra_bits[5:7], ssb_index[2:0] }
-	    }else{
-			if(ssb_subcarrier_offset_msb){
-			    ssb_subcarrier_offset = ssb_subcarrier_offset | 0x10;
-			}
-	    }
-
+    uint16_t frame = (mac->mib->systemFrameNumber.buf[0] >> mac->mib->systemFrameNumber.bits_unused);
+    uint16_t frame_number_4lsb = 0;
+    for (int i=0; i<4; i++)
+      frame_number_4lsb |= ((extra_bits>>i)&1)<<(3-i);
+    uint8_t half_frame_bit = ( extra_bits >> 4 ) & 0x1;               //	extra bits[4]
+    uint8_t ssb_subcarrier_offset_msb = ( extra_bits >> 5 ) & 0x1;    //	extra bits[5]
+    
+    uint8_t ssb_subcarrier_offset = (uint8_t)mac->mib->ssb_SubcarrierOffset;
+    
+    //uint32_t ssb_index = 0;    //  TODO: ssb_index should obtain from L1 in case Lssb != 64
+    
+    frame = frame << 4;
+    frame = frame | frame_number_4lsb;
+    
+    if(ssb_length == 64){
+      ssb_index = ssb_index & (( extra_bits >> 2 ) & 0x1C );    //	{ extra_bits[5:7], ssb_index[2:0] }
+    }else{
+      if(ssb_subcarrier_offset_msb){
+	ssb_subcarrier_offset = ssb_subcarrier_offset | 0x10;
+      }
+    }
+    
 #ifdef DEBUG_MIB
 		printf("system frame number(6 MSB bits): %d\n",  mac->mib->systemFrameNumber.buf[0]);
 		printf("system frame number(with LSB): %d\n", (int)frame);
 		printf("subcarrier spacing:            %d\n", (int)mac->mib->subCarrierSpacingCommon);
 		printf("ssb carrier offset(with MSB):  %d\n", (int)ssb_subcarrier_offset);
 		printf("dmrs type A position:          %d\n", (int)mac->mib->dmrs_TypeA_Position);
-		printf("pdcch config sib1:             %d\n", (int)mac->mib->pdcch_ConfigSIB1);
+		printf("pdcch config sib1 controlResourceSetZeor:      %d\n", (int)mac->mib->pdcch_ConfigSIB1.controlResourceSetZero);
+		printf("pdcch config sib1 searchSapceZero:             %d\n", (int)mac->mib->pdcch_ConfigSIB1.searchSpaceZero);
 		printf("cell barred:                   %d\n", (int)mac->mib->cellBarred);
 		printf("intra frequency reselection:   %d\n", (int)mac->mib->intraFreqReselection);
 		printf("half frame bit(extra bits):    %d\n", (int)half_frame_bit);
