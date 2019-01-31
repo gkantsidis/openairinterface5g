@@ -362,23 +362,20 @@ int main(int argc, char **argv)
 
   double fs,bw;
 
-  if (mu == 1 && N_RB_DL == 217) { 
+  if (mu == 1) {
+    if (N_RB_DL > 106 && N_RB_DL <= 273) { 
     fs = 122.88e6;
     bw = 80e6;
-  }					       
-  else if (mu == 1 && N_RB_DL == 245) {
-    fs = 122.88e6;
-    bw = 90e6;
+    }					       
+    else if (N_RB_DL > 0 && N_RB_DL <= 106) { 
+      fs = 61.44e6;
+      bw = 40e6;
+    }
+    else
+      AssertFatal(1==0,"Unsupported numerology for mu %d, N_RB %d\n",mu, N_RB_DL);
   }
-  else if (mu == 1 && N_RB_DL == 273) {
-    fs = 122.88e6;
-    bw = 100e6;
-  }
-  else if (mu == 1 && N_RB_DL == 106) { 
-    fs = 61.44e6;
-    bw = 40e6;
-  }
-  else AssertFatal(1==0,"Unsupported numerology for mu %d, N_RB %d\n",mu, N_RB_DL);
+  else 
+    AssertFatal(1==0,"Unsupported numerology for mu %d, N_RB %d\n",mu, N_RB_DL);
 
   gNB2UE = new_channel_desc_scm(n_tx,
                                 n_rx,
