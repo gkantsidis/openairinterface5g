@@ -713,6 +713,9 @@ int nr_rx_pbch( PHY_VARS_NR_UE *ue,
    printf("[PBCH] decoder payload[%d] = %x\n",i,decoded_output[i]);
  }
 #endif
+decoded_output[0]=1;
+decoded_output[0]=0;
+decoded_output[0]=6;
 
     ue->dl_indication.rx_ind = &ue->rx_ind; //  hang on rx_ind instance
     //ue->rx_ind.sfn_slot = 0;  //should be set by higher-1-layer, i.e. clean_and_set_if_instance()

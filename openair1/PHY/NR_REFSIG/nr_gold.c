@@ -66,10 +66,12 @@ void nr_init_pdcch_dmrs(PHY_VARS_gNB* gNB, uint32_t Nid)
 
       reset = 1;
       x2 = ((1<<17) * (14*slot+symb+1) * ((Nid<<1)+1) + (Nid<<1));
-
+      //printf("cinit %d\n", x2);
+      
       for (uint32_t n=0; n<NR_MAX_PDCCH_DMRS_INIT_LENGTH_DWORD; n++) {
         pdcch_dmrs[slot][symb][n] = lte_gold_generic(&x1, &x2, reset);
         reset = 0;
+        //printf("------->n %d slot %d symbol %d and cell ID %d: gold seq 0x%08x\n",n, slot, symb, Nid, pdcch_dmrs[slot][symb][n]);
       }
     }  
   }

@@ -154,7 +154,7 @@ int main(int argc, char **argv)
   unsigned char frame_type = 0;
   unsigned char pbch_phase = 0;
 
-  int frame=0,slot=1;
+  int frame=0,slot=0;
   int frame_length_complex_samples;
   int frame_length_complex_samples_no_prefix;
   NR_DL_FRAME_PARMS *frame_parms;
@@ -393,6 +393,7 @@ int main(int argc, char **argv)
   frame_parms->nb_antennas_rx = n_rx;
   frame_parms->N_RB_DL = N_RB_DL;
   frame_parms->N_RB_UL = N_RB_DL;
+  frame_parms->Nid_cell = Nid_cell;
 
   // stub to configure frame_parms
   nr_phy_config_request_sim(gNB,N_RB_DL,N_RB_DL,mu,Nid_cell);
@@ -404,7 +405,7 @@ int main(int argc, char **argv)
 
   double fs,bw;
 
-  if (mu == 1 && N_RB_DL == 217) { 
+  /*if (mu == 1 && N_RB_DL == 217) { 
     fs = 122.88e6;
     bw = 80e6;
   }					       
@@ -415,7 +416,11 @@ int main(int argc, char **argv)
   else if (mu == 1 && N_RB_DL == 273) {
     fs = 122.88e6;
     bw = 100e6;
-  }
+  }*/
+  if (mu == 1 && N_RB_DL > 106) { 
+    fs = 122.88e6;
+    bw = 80e6;
+  }			
   else if (mu == 1 && N_RB_DL == 106) { 
     fs = 61.44e6;
     bw = 40e6;
@@ -502,7 +507,7 @@ int main(int argc, char **argv)
   nr_l2_init_ue();
   UE_mac = get_mac_inst(0);
   
-  UE->pdcch_vars[0][0]->crnti = 0x1234;
+  UE->pdcch_vars[0][0]->crnti = 1000;
 
   UE->if_inst = nr_ue_if_module_init(0);
   UE->if_inst->scheduled_response = nr_ue_scheduled_response;
@@ -564,7 +569,7 @@ int main(int argc, char **argv)
 	      frame_length_complex_samples,
 	      input_fd) != frame_length_complex_samples) {
       printf("error reading from file\n");
-      exit(-1);
+      //exit(-1);
     }
   }
 
@@ -600,13 +605,13 @@ int main(int argc, char **argv)
   //  Type0 PDCCH search space
   dl_config.number_pdus =  1;
   dl_config.dl_config_list[0].pdu_type = FAPI_NR_DL_CONFIG_TYPE_DCI;
-  dl_config.dl_config_list[0].dci_config_pdu.dci_config_rel15.rnti = 0x1234;	//	to be set
+  dl_config.dl_config_list[0].dci_config_pdu.dci_config_rel15.rnti = 1000;	//	to be set
   
   uint64_t mask = 0x0;
   uint16_t num_rbs=24;
-  uint16_t rb_offset=24;
+  uint16_t rb_offset=0;
   uint16_t cell_id=0;
-  uint16_t num_symbols=2;
+  uint16_t num_symbols=1;
   for(i=0; i<(num_rbs/6); ++i){   //  38.331 Each bit corresponds a group of 6 RBs
     mask = mask >> 1;
     mask = mask | 0x100000000000;

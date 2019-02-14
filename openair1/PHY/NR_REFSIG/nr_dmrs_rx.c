@@ -111,19 +111,17 @@ int nr_pdcch_dmrs_rx(PHY_VARS_NR_UE *ue,
 {
 
   uint8_t idx=0;
-  //uint8_t pdcch_rb_offset =0;
-  //nr_gold_pdcch += ((int)floor(ue->frame_parms.ssb_start_subcarrier/12)+pdcch_rb_offset)*3/32;
 
   if (p==2000) {
     for (int i=0; i<((nb_rb_coreset*6)>>1); i++) {
       idx = ((((nr_gold_pdcch[(i<<1)>>5])>>((i<<1)&0x1f))&1)<<1) ^ (((nr_gold_pdcch[((i<<1)+1)>>5])>>(((i<<1)+1)&0x1f))&1);
       ((int16_t*)output)[i<<1] = nr_rx_mod_table[(NR_MOD_TABLE_QPSK_OFFSET + idx)<<1];
       ((int16_t*)output)[(i<<1)+1] = nr_rx_mod_table[((NR_MOD_TABLE_QPSK_OFFSET + idx)<<1) + 1];
-#ifdef DEBUG_PDCCH
+//#ifdef DEBUG_PDCCH
       if (i<8)
 	printf("i %d idx %d pdcch gold %u b0-b1 %d-%d mod_dmrs %d %d\n", i, idx, nr_gold_pdcch[(i<<1)>>5], (((nr_gold_pdcch[(i<<1)>>5])>>((i<<1)&0x1f))&1),
 	       (((nr_gold_pdcch[((i<<1)+1)>>5])>>(((i<<1)+1)&0x1f))&1), ((int16_t*)output)[i<<1], ((int16_t*)output)[(i<<1)+1],&output[0]);
-#endif
+//#endif
     }
   }
 

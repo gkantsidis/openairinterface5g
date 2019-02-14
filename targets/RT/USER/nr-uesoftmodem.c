@@ -992,8 +992,8 @@ int main( int argc, char **argv ) {
     
     if (UE[CC_id]->mac_enabled == 1)
       {
-	UE[CC_id]->pdcch_vars[0][0]->crnti = 0x1234;
-	UE[CC_id]->pdcch_vars[1][0]->crnti = 0x1234;
+	UE[CC_id]->pdcch_vars[0][0]->crnti = 1000;
+	UE[CC_id]->pdcch_vars[1][0]->crnti = 1000;
       }
     else
       {

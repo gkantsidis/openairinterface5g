@@ -921,7 +921,7 @@ int32_t nr_rx_pdcch(PHY_VARS_NR_UE *ue,
 
 #ifdef DEBUG_PHY
 
-    if (nr_tti_rx==5)
+    if (nr_tti_rx==0)
       write_output("rxF_comp_d.m","rxF_c_d",&pdcch_vars[eNB_id]->rxdataF_comp[0][s*frame_parms->N_RB_DL*12],frame_parms->N_RB_DL*12,1,1);
 
 #endif
