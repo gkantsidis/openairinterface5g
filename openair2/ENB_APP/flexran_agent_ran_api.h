@@ -509,6 +509,9 @@ int flexran_get_rrc_neigh_plmn_mcc(mid_t mod_id, mid_t ue_id, int cell_id); */
 /* currently not implemented
 int flexran_get_rrc_neigh_plmn_mnc(mid_t mod_id, mid_t ue_id, int cell_id); */
 
+/* gets the UEs S1AP ID at eNodeB, stored in RRC */
+uint32_t flexran_get_rrc_enb_ue_s1ap_id(mid_t mod_id, rnti_t rnti);
+
 /************************** Slice configuration **************************/
 
 /* Get the DL slice ID for a UE */

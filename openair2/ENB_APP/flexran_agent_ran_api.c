@@ -1466,6 +1466,14 @@ float flexran_get_rrc_neigh_rsrq(mid_t mod_id, mid_t ue_id, int cell_id)
   return RSRQ_meas_mapping[*(ue_context_p->ue_context.measResults->measResultNeighCells->choice.measResultListEUTRA.list.array[cell_id]->measResult.rsrqResult)];
 }
 
+uint32_t flexran_get_rrc_enb_ue_s1ap_id(mid_t mod_id, rnti_t rnti)
+{
+  if (!rrc_is_present(mod_id)) return 0;
+  struct rrc_eNB_ue_context_s* ue_context_p = rrc_eNB_get_ue_context(RC.rrc[mod_id], rnti);
+  if (!ue_context_p) return -1;
+  return ue_context_p->ue_context.eNB_ue_s1ap_id;
+}
+
 int flexran_get_ue_dl_slice_id(mid_t mod_id, mid_t ue_id)
 {
   if (!mac_is_present(mod_id)) return -1;
