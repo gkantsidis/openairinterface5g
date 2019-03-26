@@ -278,6 +278,7 @@ message flex_s1ap_mme {
         optional flex_mme_state state = 3;                // State of the MME
         repeated flex_gummei served_gummeis = 4;          // GUMMEIs served by the MME
         repeated flex_plmn requested_plmns = 5;           // PLMNs communicated to MME
+        optional uint32 rel_capacity = 6;                 // Relative MME capacity, TS23.401
 }
 
 message flex_s1ap_ue {
