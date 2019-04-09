@@ -172,7 +172,8 @@ void RCconfig_flexran() {
     RC.flexran[i]->capability_mask = FLEXRAN_CAP_LOPHY | FLEXRAN_CAP_HIPHY
                                      | FLEXRAN_CAP_LOMAC | FLEXRAN_CAP_HIMAC
                                      | FLEXRAN_CAP_RLC   | FLEXRAN_CAP_PDCP
-                                     | FLEXRAN_CAP_SDAP  | FLEXRAN_CAP_RRC;
+                                     | FLEXRAN_CAP_SDAP  | FLEXRAN_CAP_RRC
+                                     | FLEXRAN_CAP_S1AP;
   }
 }
 

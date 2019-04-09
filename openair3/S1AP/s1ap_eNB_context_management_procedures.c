@@ -173,6 +173,18 @@ int s1ap_ue_context_release_complete(instance_t instance,
 
   if ((ue_context2_p = RB_REMOVE(s1ap_ue_map, &s1ap_eNB_instance_p->s1ap_ue_head, ue_context_p))
       != NULL) {
+    if (ue_context_p->mme_ref->s1ap_ue_nb>0)
+      ue_context_p->mme_ref->s1ap_ue_nb--;
+    else
+      ue_context_p->mme_ref->s1ap_ue_nb=0;
+    
+    if (s1ap_eNB_instance_p->s1ap_ue_nb>0)
+      s1ap_eNB_instance_p->s1ap_ue_nb--;
+    else 
+      s1ap_eNB_instance_p->s1ap_ue_nb=0;
+      
+      S1AP_WARN("Inconsistent number of associated UE to this MME %s\n",ue_context_p->mme_ref->mme_name);
+    
     S1AP_WARN("Removed UE context eNB_ue_s1ap_id %u\n",
               ue_context2_p->eNB_ue_s1ap_id);
     s1ap_eNB_free_ue_context(ue_context2_p);

@@ -44,7 +44,7 @@ message flex_cell_config {
 	optional int32 dl_pdsch_power = 38;       // operating downlink power 
 	optional int32 ul_pusch_power = 39;       // operating uplink power
 
-	optional flex_slice_config slice_config = 42;
+	optional flex_slice_config slice_config = 42; 
 }
 
 message flex_slice_config {

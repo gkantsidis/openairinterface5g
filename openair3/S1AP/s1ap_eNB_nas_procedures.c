@@ -184,6 +184,9 @@ int s1ap_eNB_handle_nas_first_req(
             break;
         }
     } while(1);
+    // increment the number of UE associated to this MME
+    mme_desc_p->s1ap_ue_nb++;
+    instance_p->s1ap_ue_nb++;
 
     /* mandatory */
     ie = (S1AP_InitialUEMessage_IEs_t *)calloc(1, sizeof(S1AP_InitialUEMessage_IEs_t));
@@ -1690,7 +1693,10 @@ int s1ap_eNB_path_switch_req(instance_t instance,
       break;
     }
   } while(1);
-
+  // increment the number of UE associated to this MME
+  mme_desc_p->s1ap_ue_nb++;
+  s1ap_eNB_instance_p->s1ap_ue_nb++;
+  
   ue_context_p->mme_ue_s1ap_id = path_switch_req_p->mme_ue_s1ap_id;
 
   /* Prepare the S1AP message to encode */

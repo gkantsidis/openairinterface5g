@@ -29,6 +29,9 @@
 #include <dlfcn.h>
 #include "flexran_agent_ran_api.h"
 
+#include "s1ap_eNB_ue_context.h"
+#include "s1ap_eNB_management_procedures.h"
+
 static inline int phy_is_present(mid_t mod_id, uint8_t cc_id)
 {
   return RC.eNB && RC.eNB[mod_id] && RC.eNB[mod_id][cc_id];
@@ -1888,4 +1891,196 @@ int flexran_set_ul_slice_scheduler(mid_t mod_id, int slice_idx, char *name)
   RC.mac[mod_id]->slice_info.ul[slice_idx].sched_name = strdup(name);
   RC.mac[mod_id]->slice_info.ul[slice_idx].sched_cb = dlsym(NULL, name);
   return RC.mac[mod_id]->slice_info.ul[slice_idx].sched_cb != NULL;
+}
+
+/************************** S1AP **************************/
+int flexran_get_s1ap_mme_pending(mid_t mod_id){
+  if (!rrc_is_present(mod_id)) return -1;
+  s1ap_eNB_instance_t *s1ap=s1ap_eNB_get_instance(mod_id);
+  if (!s1ap) return -1;
+  return s1ap->s1ap_mme_pending_nb;
+}
+int flexran_get_s1ap_mme_connected(mid_t mod_id){
+  if (!rrc_is_present(mod_id)) return -1;
+  s1ap_eNB_instance_t *s1ap=s1ap_eNB_get_instance(mod_id);
+  if (!s1ap) return -1;
+  return s1ap->s1ap_mme_associated_nb;
+}
+char* flexran_get_s1ap_enb_s1_ip(mid_t mod_id){
+  if (!rrc_is_present(mod_id)) return NULL;
+  s1ap_eNB_instance_t *s1ap=s1ap_eNB_get_instance(mod_id);
+  if (!s1ap) return NULL;
+  if (s1ap->eNB_s1_ip.ipv4)
+    return &s1ap->eNB_s1_ip.ipv4_address[0];
+  if (s1ap->eNB_s1_ip.ipv6)
+    return &s1ap->eNB_s1_ip.ipv6_address[0];
+  return NULL;
+}
+char* flexran_get_s1ap_enb_name(mid_t mod_id){
+  if (!rrc_is_present(mod_id)) return NULL;
+  s1ap_eNB_instance_t *s1ap=s1ap_eNB_get_instance(mod_id);
+  if (!s1ap) return NULL;
+  return s1ap->eNB_name;
+}
+int flexran_get_s1ap_nb_mme(mid_t mod_id){
+  if (!rrc_is_present(mod_id)) return 0; // as this returns nb mme
+  s1ap_eNB_instance_t *s1ap=s1ap_eNB_get_instance(mod_id);
+  if (!s1ap) return 0;
+  return s1ap->s1ap_mme_nb;
+}
+int flexran_get_s1ap_nb_ue(mid_t mod_id){
+  if (!rrc_is_present(mod_id)) return 0; // as this returns nb ue
+  s1ap_eNB_instance_t *s1ap=s1ap_eNB_get_instance(mod_id);
+  if (!s1ap) return 0;
+  return s1ap->s1ap_ue_nb;
+}
+int flexran_get_s1ap_mme_conf(mid_t mod_id, mid_t mme_index, Protocol__FlexS1apMme * mme_conf){
+  if (!rrc_is_present(mod_id)) return -1;
+  s1ap_eNB_instance_t *s1ap=s1ap_eNB_get_instance(mod_id);
+  if (!s1ap) return -1;
+
+  struct served_gummei_s   *gummei_p = NULL;
+  struct plmn_identity_s   *served_plmn_p = NULL; 
+  struct served_group_id_s *group_id_p = NULL; 
+  struct mme_code_s        *mme_code_p = NULL; 
+  int i = 0;
+  Protocol__FlexGummei  **served_gummeis;
+  Protocol__FlexPlmn    **requested_plmns;
+  
+  struct s1ap_eNB_mme_data_s *mme = NULL; 
+  //struct s1ap_eNB_mme_data_s *mme_next = NULL;
+  int mme_current_index=0;
+
+  // for (mme = RB_MIN(s1ap_mme_map, &s1ap->s1ap_mme_head); mme!=NULL ; mme = mme_next) {
+  RB_FOREACH(mme, s1ap_mme_map, &s1ap->s1ap_mme_head){
+    if (mme_current_index == mme_index) break;
+    // the RB_NEXt primitive starts from right leaf(lowest index) to the left leaf (highest index)
+    //mme_next = RB_NEXT(s1ap_mme_map, &instance_p->s1ap_mme_head, mme);
+    mme_current_index++;
+  }
+  if (mme==NULL) return -1;
+
+  if (mme->mme_s1_ip.ipv4)
+    mme_conf->s1_ip = (char*) &mme->mme_s1_ip.ipv4_address[0];
+  else if (mme->mme_s1_ip.ipv6)
+    mme_conf->s1_ip = (char*) &mme->mme_s1_ip.ipv6_address[0];
+  mme_conf->name= (mme->mme_name)? mme->mme_name : "NONAME";
+  mme_conf->has_state=1;
+  mme_conf->state=mme->state;
+  
+  mme_conf->n_served_gummeis=0;
+  STAILQ_FOREACH(gummei_p, &mme->served_gummei, next){
+    mme_conf->n_served_gummeis++;
+  }
+  // served GUMMEI  
+  if (mme_conf->n_served_gummeis>0) {
+    served_gummeis=malloc(sizeof(Protocol__FlexGummei*) * mme_conf->n_served_gummeis);
+    if(served_gummeis == NULL) return -1 ; 
+    //for(i = 0; i < mme_conf->n_served_gummeis; i++){
+    STAILQ_FOREACH(gummei_p, &mme->served_gummei, next){
+      
+      served_plmn_p = STAILQ_FIRST(&gummei_p->served_plmns);
+      group_id_p = STAILQ_FIRST(&gummei_p->served_group_ids);
+      mme_code_p = STAILQ_FIRST(&gummei_p->mme_codes);
+  
+      served_gummeis[i] = malloc(sizeof(Protocol__FlexGummei));
+      if (!served_gummeis[i]) return -1 ;
+      protocol__flex_gummei__init(served_gummeis[i]);
+      served_gummeis[i]->plmn=malloc(sizeof(Protocol__FlexPlmn));
+      if (!served_gummeis[i]->plmn) return -1 ;
+      protocol__flex_plmn__init(served_gummeis[i]->plmn);
+      
+      if (served_plmn_p){ // if (served_plmn_p->nb_served_plmns > mme_conf->n_served_gummeis)
+	served_gummeis[i]->plmn->has_mcc=1;
+	served_gummeis[i]->plmn->mcc=served_plmn_p->mcc;
+	served_gummeis[i]->plmn->has_mnc=1;
+	served_gummeis[i]->plmn->mnc=served_plmn_p->mnc;
+	served_gummeis[i]->plmn->has_mnc_length=1;
+	served_gummeis[i]->plmn->mnc_length=served_plmn_p-> mnc_digit_length;
+	STAILQ_NEXT(served_plmn_p, next);
+      }
+      if (group_id_p){
+	served_gummeis[i]->has_mme_group_id=1;
+	served_gummeis[i]->mme_group_id=group_id_p->mme_group_id;
+	STAILQ_NEXT(group_id_p, next);
+      }
+      if (mme_code_p){
+	served_gummeis[i]->has_mme_code=1;
+	served_gummeis[i]->mme_code=mme_code_p->mme_code;
+	STAILQ_NEXT(mme_code_p, next);
+      }
+      i++;
+    }
+    
+    mme_conf->served_gummeis=served_gummeis;
+  }  
+  
+  // requested PLMNS
+  mme_conf->n_requested_plmns= mme->broadcast_plmn_num;
+  if (mme_conf->n_requested_plmns>0){
+    requested_plmns=malloc(sizeof(Protocol__FlexPlmn*) * mme_conf->n_requested_plmns);
+    if(requested_plmns == NULL)   return -1 ;
+    for(int i = 0; i < mme_conf->n_requested_plmns; i++){
+      requested_plmns[i] = malloc(sizeof(Protocol__FlexPlmn));
+      if (!requested_plmns[i])  return -1; 
+      protocol__flex_plmn__init(requested_plmns[i]);
+      requested_plmns[i]->has_mcc=1;
+      requested_plmns[i]->has_mnc=1;
+      requested_plmns[i]->has_mnc_length=1;
+      requested_plmns[i]->mcc= s1ap->mcc[mme->broadcast_plmn_index[i]]; 
+      requested_plmns[i]->mnc= s1ap->mnc[mme->broadcast_plmn_index[i]];
+      requested_plmns[i]->mnc_length= s1ap->mnc_digit_length[mme->broadcast_plmn_index[i]];  
+    }
+    mme_conf->requested_plmns=requested_plmns;
+  }
+  
+
+  mme_conf->has_rel_capacity=1;
+  mme_conf->rel_capacity=mme->relative_mme_capacity;
+
+  return 0;
+ 
+}
+
+int flexran_get_s1ap_ue_conf(mid_t mod_id, mid_t ue_index, Protocol__FlexS1apUe * ue_conf){
+
+  if (!rrc_is_present(mod_id)) return -1;
+  s1ap_eNB_instance_t *s1ap=s1ap_eNB_get_instance(mod_id);
+  if (!s1ap) return -1;
+
+  struct s1ap_eNB_ue_context_s *ue = NULL; 
+  int ue_current_index=0;
+
+ 
+  if (s1ap->s1ap_ue_nb > 0 ) {
+    RB_FOREACH(ue, s1ap_ue_map, &s1ap->s1ap_ue_head){
+      if (ue_current_index == ue_index) break;
+      ue_current_index++;
+    }
+  }
+
+  if (ue==NULL) return -1;
+  
+  if (ue->mme_ref->mme_s1_ip.ipv4)
+    ue_conf->mme_s1_ip = (char*) &ue->mme_ref->mme_s1_ip.ipv4_address[0];
+  else if (ue->mme_ref->mme_s1_ip.ipv6)
+    ue_conf->mme_s1_ip = (char*) &ue->mme_ref->mme_s1_ip.ipv6_address[0];
+  
+  ue_conf->has_enb_ue_s1ap_id=1;
+  ue_conf->enb_ue_s1ap_id=ue->eNB_ue_s1ap_id;
+  ue_conf->has_mme_ue_s1ap_id=1;
+  ue_conf->mme_ue_s1ap_id=ue->mme_ue_s1ap_id;
+  
+  ue_conf->selected_plmn = malloc(sizeof(Protocol__FlexPlmn));
+  if (!ue_conf->selected_plmn) return -1;
+  protocol__flex_plmn__init(ue_conf->selected_plmn);
+  
+  ue_conf->selected_plmn->has_mcc=1;
+  ue_conf->selected_plmn->mcc=s1ap->mcc[ue->selected_plmn_identity];
+  ue_conf->selected_plmn->has_mnc=1;
+  ue_conf->selected_plmn->mnc=s1ap->mnc[ue->selected_plmn_identity];
+  ue_conf->selected_plmn->has_mnc_length=1;
+  ue_conf->selected_plmn->mnc_length=s1ap->mnc_digit_length[ue->selected_plmn_identity];
+
+  return 0;
 }

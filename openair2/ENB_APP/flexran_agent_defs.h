@@ -146,6 +146,7 @@ typedef enum {
 #define FLEXRAN_CAP_PDCP  32
 #define FLEXRAN_CAP_SDAP  64
 #define FLEXRAN_CAP_RRC   128
+#define FLEXRAN_CAP_S1AP  256
 
 typedef enum {
   ENB_NORMAL_OPERATION = 0x0,
@@ -163,7 +164,7 @@ typedef struct {
 
   mid_t    mod_id;
   uint64_t agent_id;
-  uint8_t  capability_mask;
+  uint16_t  capability_mask;
 
   /* lock for waiting before starting or soft-restart */
   pthread_cond_t      cond_node_ctrl;

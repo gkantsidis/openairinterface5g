@@ -21,7 +21,7 @@
 
 /*! \file flexran_agent_common.c
  * \brief common primitives for all agents
- * \author Xenofon Foukas, Mohamed Kassem and Navid Nikaein, shahab SHARIAT BAGHERI
+ * \author Xenofon Foukas, Mohamed Kassem and Navid Nikaein
  * \date 2017
  * \version 0.1
  */
@@ -35,6 +35,7 @@
 #include "flexran_agent_extern.h"
 #include "flexran_agent_net_comm.h"
 #include "flexran_agent_ran_api.h"
+#include "flexran_agent_s1ap.h"
 //#include "PHY/extern.h"
 #include "common/utils/LOG/log.h"
 #include "flexran_agent_mac_internal.h"
@@ -325,7 +326,17 @@ int flexran_agent_destroy_enb_config_reply(Protocol__FlexranMessage *msg) {
 
     free(reply->cell_config[i]);
   }
-
+  
+  if (reply->s1ap){
+    for (i = 0; i < reply->s1ap->n_mme; i++) {
+      for(j = 0; j < reply->s1ap->mme[i]->n_served_gummeis; j++) 
+	free(reply->s1ap->mme[i]->served_gummeis[j]);
+      free(reply->s1ap->mme[i]);
+    }
+    for (j = 0; j < reply->s1ap->n_ue; ++j) 
+      free(reply->s1ap->ue[j]);
+  }
+      
   free(reply->cell_config);
   free(reply);
   free(msg);
@@ -1079,18 +1090,24 @@ int flexran_agent_enb_config_reply(mid_t mod_id, const void *params, Protocol__F
       } else if(flexran_get_enable64QAM(mod_id,i) == 1) {
         cell_conf[i]->enable_64qam = PROTOCOL__FLEX_QAM__FLEQ_MOD_64QAM;
       }
-
+       
       cell_conf[i]->has_enable_64qam = 1;
       cell_conf[i]->carrier_index = i;
       cell_conf[i]->has_carrier_index = 1;
       /* get a pointer to the config which is maintained in the agent throughout
       * its lifetime */
       cell_conf[i]->slice_config = flexran_agent_get_slice_config(mod_id);
-    }
 
+    }
+    
     enb_config_reply_msg->cell_config=cell_conf;
   }
+  
+  if (flexran_agent_get_s1ap_xface(mod_id)){
+    flexran_agent_fill_s1ap_cell_config(mod_id, &enb_config_reply_msg->s1ap);
+  }
 
+  
   *msg = malloc(sizeof(Protocol__FlexranMessage));
 
   if(*msg == NULL)

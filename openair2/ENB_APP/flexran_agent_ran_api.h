@@ -663,3 +663,30 @@ void flexran_set_ul_slice_maxmcs(mid_t mod_id, int slice_idx, int maxmcs);
 char *flexran_get_ul_slice_scheduler(mid_t mod_id, int slice_idx);
 /* Set the scheduler name for a slice in UL */
 int flexran_set_ul_slice_scheduler(mid_t mod_id, int slice_idx, char *name);
+
+/************************** S1AP **************************/
+
+/* Get the number of MMEs to be connected */
+int flexran_get_s1ap_mme_pending(mid_t mod_id);
+
+/* Get the number of connected MMEs */
+int flexran_get_s1ap_mme_connected(mid_t mod_id);
+
+/* Get the eNB S1AP IP address */
+char* flexran_get_s1ap_enb_s1_ip(mid_t mod_id);
+
+/* Get the name of the eNB */
+char* flexran_get_s1ap_enb_name(mid_t mod_id);
+
+/* Get the number of connected MMEs to this eNB */
+int flexran_get_s1ap_nb_mme(mid_t mod_id);
+
+/* Get the number of connected UEs to this eNB */
+int flexran_get_s1ap_nb_ue(mid_t mod_id);
+
+/* Get the S1AP MME conf */
+int flexran_get_s1ap_mme_conf(mid_t mod_id, mid_t mme_index, Protocol__FlexS1apMme * mme_conf);
+
+/* Get the S1AP UE conf */
+int flexran_get_s1ap_ue_conf(mid_t mod_id, mid_t ue_index, Protocol__FlexS1apUe * ue_conf);
+
