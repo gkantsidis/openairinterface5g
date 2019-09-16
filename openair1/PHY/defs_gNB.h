@@ -644,6 +644,9 @@ typedef struct PHY_VARS_gNB_s {
   /// PDSCH DMRS sequence
   uint32_t ****nr_gold_pdsch_dmrs;
 
+  /// CSI  RS sequence
+  uint32_t ***nr_gold_csi_rs;
+
   /// Indicator set to 0 after first SR
   uint8_t first_sr[NUMBER_OF_UE_MAX];
 
