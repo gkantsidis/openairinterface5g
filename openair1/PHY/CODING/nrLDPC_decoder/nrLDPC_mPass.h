@@ -153,17 +153,17 @@ static inline void nrLDPC_cn2bnProcBuf(t_nrLDPC_lut* p_lut, t_nrLDPC_procBuf* p_
     for (j=0; j<3; j++)
     {
         p_cnProcBufRes = &cnProcBufRes[lut_startAddrCnGroups[0] + j*bitOffsetInGroup];
-
+	
         for (i=0; i<M; i++)
         {
             bnProcBuf[p_lut_cn2bn[j*M + i]] = p_cnProcBufRes[i];
-        }
+	}
     }
 
     // =====================================================================
     // CN group with 4 BNs
 
-    p_lut_cn2bn += (M*3); // Number of elements of previous group
+    //    p_lut_cn2bn += (M*3); // Number of elements of previous group
     M = lut_numCnInCnGroups[1]*Z;
     bitOffsetInGroup = lut_numCnInCnGroups_BG2_R15[1]*NR_LDPC_ZMAX;
 
@@ -278,11 +278,10 @@ static inline void nrLDPC_cn2bnProcBuf_BG1(t_nrLDPC_lut* p_lut, t_nrLDPC_procBuf
     for (j=0; j<3; j++)
     {
         p_cnProcBufRes = &cnProcBufRes[lut_startAddrCnGroups[0] + j*bitOffsetInGroup];
-
         for (i=0; i<M; i++)
         {
             bnProcBuf[p_lut_cn2bn[j*M + i]] = p_cnProcBufRes[i];
-        }
+	}
     }
 
     // =====================================================================
@@ -422,6 +421,32 @@ static inline void nrLDPC_cn2bnProcBuf_BG1(t_nrLDPC_lut* p_lut, t_nrLDPC_procBuf
     }
 
 }
+static inline uint32_t *bn2cnmap(uint32_t* p_lut_cn2bn,int8_t *p_cnProcBuf,int8_t *bnProcBufRes,int M2) __attribute__((always_inline));
+
+static inline uint32_t *bn2cnmap(uint32_t* p_lut_cn2bn,int8_t *p_cnProcBuf,int8_t *bnProcBufRes,int M2) {
+
+  __m128i tmp;
+
+  for (int i=0;i<M2;i++) {
+    tmp=_mm_insert_epi8(tmp,bnProcBufRes[*p_lut_cn2bn++],0);
+    tmp=_mm_insert_epi8(tmp,bnProcBufRes[*p_lut_cn2bn++],1);
+    tmp=_mm_insert_epi8(tmp,bnProcBufRes[*p_lut_cn2bn++],2);
+    tmp=_mm_insert_epi8(tmp,bnProcBufRes[*p_lut_cn2bn++],3);
+    tmp=_mm_insert_epi8(tmp,bnProcBufRes[*p_lut_cn2bn++],4);
+    tmp=_mm_insert_epi8(tmp,bnProcBufRes[*p_lut_cn2bn++],5);
+    tmp=_mm_insert_epi8(tmp,bnProcBufRes[*p_lut_cn2bn++],6);
+    tmp=_mm_insert_epi8(tmp,bnProcBufRes[*p_lut_cn2bn++],7);
+    tmp=_mm_insert_epi8(tmp,bnProcBufRes[*p_lut_cn2bn++],8);
+    tmp=_mm_insert_epi8(tmp,bnProcBufRes[*p_lut_cn2bn++],9);
+    tmp=_mm_insert_epi8(tmp,bnProcBufRes[*p_lut_cn2bn++],10);
+    tmp=_mm_insert_epi8(tmp,bnProcBufRes[*p_lut_cn2bn++],11);
+    tmp=_mm_insert_epi8(tmp,bnProcBufRes[*p_lut_cn2bn++],12);
+    tmp=_mm_insert_epi8(tmp,bnProcBufRes[*p_lut_cn2bn++],13);
+    tmp=_mm_insert_epi8(tmp,bnProcBufRes[*p_lut_cn2bn++],14);
+    ((__m128i *)p_cnProcBuf)[i]=_mm_insert_epi8(tmp,bnProcBufRes[*p_lut_cn2bn++],15);
+  }
+  return(p_lut_cn2bn);
+} 
 
 /**
    \brief Copies the values in the BN processing results buffer to their corresponding place in the CN processing buffer for BG2.
@@ -457,7 +482,6 @@ static inline void nrLDPC_bn2cnProcBuf(t_nrLDPC_lut* p_lut, t_nrLDPC_procBuf* p_
     for (j=0; j<2; j++)
     {
         p_cnProcBuf = &cnProcBuf[lut_startAddrCnGroups[0] + j*bitOffsetInGroup];
-
         for (i=0; i<M; i++)
         {
             p_cnProcBuf[i] = bnProcBufRes[p_lut_cn2bn[j*M + i]];
@@ -474,7 +498,6 @@ static inline void nrLDPC_bn2cnProcBuf(t_nrLDPC_lut* p_lut, t_nrLDPC_procBuf* p_
     for (j=0; j<3; j++)
     {
         p_cnProcBuf = &cnProcBuf[lut_startAddrCnGroups[1] + j*bitOffsetInGroup];
-
         for (i=0; i<M; i++)
         {
             p_cnProcBuf[i] = bnProcBufRes[p_lut_cn2bn[j*M + i]];
@@ -491,7 +514,6 @@ static inline void nrLDPC_bn2cnProcBuf(t_nrLDPC_lut* p_lut, t_nrLDPC_procBuf* p_
     for (j=0; j<4; j++)
     {
         p_cnProcBuf = &cnProcBuf[lut_startAddrCnGroups[2] + j*bitOffsetInGroup];
-
         for (i=0; i<M; i++)
         {
             p_cnProcBuf[i] = bnProcBufRes[p_lut_cn2bn[j*M + i]];
@@ -508,7 +530,6 @@ static inline void nrLDPC_bn2cnProcBuf(t_nrLDPC_lut* p_lut, t_nrLDPC_procBuf* p_
     for (j=0; j<5; j++)
     {
         p_cnProcBuf = &cnProcBuf[lut_startAddrCnGroups[3] + j*bitOffsetInGroup];
-
         for (i=0; i<M; i++)
         {
             p_cnProcBuf[i] = bnProcBufRes[p_lut_cn2bn[j*M + i]];
@@ -521,7 +542,6 @@ static inline void nrLDPC_bn2cnProcBuf(t_nrLDPC_lut* p_lut, t_nrLDPC_procBuf* p_
     p_lut_cn2bn += (M*6); // Number of elements of previous group
     M = lut_numCnInCnGroups[4]*Z;
     bitOffsetInGroup = lut_numCnInCnGroups_BG2_R15[4]*NR_LDPC_ZMAX;
-
     for (j=0; j<8; j++)
     {
         p_cnProcBuf = &cnProcBuf[lut_startAddrCnGroups[4] + j*bitOffsetInGroup];
@@ -542,7 +562,7 @@ static inline void nrLDPC_bn2cnProcBuf(t_nrLDPC_lut* p_lut, t_nrLDPC_procBuf* p_
     for (j=0; j<10; j++)
     {
         p_cnProcBuf = &cnProcBuf[lut_startAddrCnGroups[5] + j*bitOffsetInGroup];
-
+	printf("5 BN: cNProcBuf output at %d\n",lut_startAddrCnGroups[5] + j*bitOffsetInGroup);
         for (i=0; i<M; i++)
         {
             p_cnProcBuf[i] = bnProcBufRes[p_lut_cn2bn[j*M + i]];
@@ -550,6 +570,7 @@ static inline void nrLDPC_bn2cnProcBuf(t_nrLDPC_lut* p_lut, t_nrLDPC_procBuf* p_
     }
 
 }
+
 
 /**
    \brief Copies the values in the BN processing results buffer to their corresponding place in the CN processing buffer for BG1.
@@ -566,7 +587,7 @@ static inline void nrLDPC_bn2cnProcBuf_BG1(t_nrLDPC_lut* p_lut, t_nrLDPC_procBuf
     int8_t* bnProcBufRes = p_procBuf->bnProcBufRes;
     
     int8_t* p_cnProcBuf;
-    const uint32_t* p_lut_cn2bn;
+    uint32_t* p_lut_cn2bn;
     uint32_t bitOffsetInGroup;
     uint32_t i;
     uint32_t j;
@@ -582,152 +603,196 @@ static inline void nrLDPC_bn2cnProcBuf_BG1(t_nrLDPC_lut* p_lut, t_nrLDPC_procBuf
     M = lut_numCnInCnGroups[0]*Z;
     bitOffsetInGroup = lut_numCnInCnGroups_BG1_R13[0]*NR_LDPC_ZMAX;
 
-    for (j=0; j<2; j++)
+    for (j=0;j<2; j++)
     {
         p_cnProcBuf = &cnProcBuf[lut_startAddrCnGroups[0] + j*bitOffsetInGroup];
+	p_lut_cn2bn = bn2cnmap(p_lut_cn2bn,p_cnProcBuf,bnProcBufRes,M>>4);
 
+	/*
         for (i=0; i<M; i++)
         {
-            p_cnProcBuf[i] = bnProcBufRes[p_lut_cn2bn[j*M + i]];
+	  //            p_cnProcBuf[i] = bnProcBufRes[p_lut_cn2bn[j*M + i]];
+	  p_cnProcBuf[i] = bnProcBufRes[*p_lut_cn2bn++];
         }
+	*/
+
     }
 
     // =====================================================================
     // CN group with 4 BNs
 
-    p_lut_cn2bn += (M*3); // Number of elements of previous group
+//    p_lut_cn2bn += (M*3); // Number of elements of previous group
+    p_lut_cn2bn += M; // Number of elements of previous group
     M = lut_numCnInCnGroups[1]*Z;
     bitOffsetInGroup = lut_numCnInCnGroups_BG1_R13[1]*NR_LDPC_ZMAX;
 
     for (j=0; j<3; j++)
     {
         p_cnProcBuf = &cnProcBuf[lut_startAddrCnGroups[1] + j*bitOffsetInGroup];
-
+	p_lut_cn2bn = bn2cnmap(p_lut_cn2bn,p_cnProcBuf,bnProcBufRes,M>>4);
+	/*
         for (i=0; i<M; i++)
         {
-            p_cnProcBuf[i] = bnProcBufRes[p_lut_cn2bn[j*M + i]];
-        }
+	  //            p_cnProcBuf[i] = bnProcBufRes[p_lut_cn2bn[j*M + i]];
+            p_cnProcBuf[i] = bnProcBufRes[*p_lut_cn2bn++];
+	    }*/
     }
 
     // =====================================================================
     // CN group with 5 BNs
 
-    p_lut_cn2bn += (M*4); // Number of elements of previous group
+//    p_lut_cn2bn += (M*4); // Number of elements of previous group
+    p_lut_cn2bn += M; // Number of elements of previous group
     M = lut_numCnInCnGroups[2]*Z;
     bitOffsetInGroup = lut_numCnInCnGroups_BG1_R13[2]*NR_LDPC_ZMAX;
 
     for (j=0; j<4; j++)
     {
         p_cnProcBuf = &cnProcBuf[lut_startAddrCnGroups[2] + j*bitOffsetInGroup];
-
+	p_lut_cn2bn = bn2cnmap(p_lut_cn2bn,p_cnProcBuf,bnProcBufRes,M>>4);
+	/*
         for (i=0; i<M; i++)
         {
-            p_cnProcBuf[i] = bnProcBufRes[p_lut_cn2bn[j*M + i]];
-        }
+	  //            p_cnProcBuf[i] = bnProcBufRes[p_lut_cn2bn[j*M + i]];
+            p_cnProcBuf[i] = bnProcBufRes[*p_lut_cn2bn++];
+	    }*/
     }
 
     // =====================================================================
     // CN group with 6 BNs
 
-    p_lut_cn2bn += (M*5); // Number of elements of previous group
+    //    p_lut_cn2bn += (M*5); // Number of elements of previous group
+    p_lut_cn2bn += M; // Number of elements of previous group
     M = lut_numCnInCnGroups[3]*Z;
     bitOffsetInGroup = lut_numCnInCnGroups_BG1_R13[3]*NR_LDPC_ZMAX;
 
     for (j=0; j<5; j++)
     {
         p_cnProcBuf = &cnProcBuf[lut_startAddrCnGroups[3] + j*bitOffsetInGroup];
-
+	p_lut_cn2bn = bn2cnmap(p_lut_cn2bn,p_cnProcBuf,bnProcBufRes,M>>4);
+	/*
         for (i=0; i<M; i++)
         {
-            p_cnProcBuf[i] = bnProcBufRes[p_lut_cn2bn[j*M + i]];
-        }
+	  //            p_cnProcBuf[i] = bnProcBufRes[p_lut_cn2bn[j*M + i]];
+            p_cnProcBuf[i] = bnProcBufRes[*p_lut_cn2bn++];
+	    }*/
     }
 
     // =====================================================================
     // CN group with 7 BNs
 
-    p_lut_cn2bn += (M*6); // Number of elements of previous group
+    //    p_lut_cn2bn += (M*6); // Number of elements of previous group
+    p_lut_cn2bn += M; // Number of elements of previous group
     M = lut_numCnInCnGroups[4]*Z;
     bitOffsetInGroup = lut_numCnInCnGroups_BG1_R13[4]*NR_LDPC_ZMAX;
 
     for (j=0; j<6; j++)
     {
         p_cnProcBuf = &cnProcBuf[lut_startAddrCnGroups[4] + j*bitOffsetInGroup];
-
+	p_lut_cn2bn = bn2cnmap(p_lut_cn2bn,p_cnProcBuf,bnProcBufRes,M>>4);
+	/*
         for (i=0; i<M; i++)
         {
-            p_cnProcBuf[i] = bnProcBufRes[p_lut_cn2bn[j*M + i]];
-        }
+	  //            p_cnProcBuf[i] = bnProcBufRes[p_lut_cn2bn[j*M + i]];
+	  p_cnProcBuf[i] = bnProcBufRes[*p_lut_cn2bn++];
+	  }*/
     }
 
     // =====================================================================
     // CN group with 8 BNs
 
-    p_lut_cn2bn += (M*7); // Number of elements of previous group
+    //    p_lut_cn2bn += (M*7); // Number of elements of previous group
+    p_lut_cn2bn += M; // Number of elements of previous group
     M = lut_numCnInCnGroups[5]*Z;
     bitOffsetInGroup = lut_numCnInCnGroups_BG1_R13[5]*NR_LDPC_ZMAX;
 
     for (j=0; j<7; j++)
     {
         p_cnProcBuf = &cnProcBuf[lut_startAddrCnGroups[5] + j*bitOffsetInGroup];
-
+	p_lut_cn2bn = bn2cnmap(p_lut_cn2bn,p_cnProcBuf,bnProcBufRes,M>>4);
+	/*
         for (i=0; i<M; i++)
         {
-            p_cnProcBuf[i] = bnProcBufRes[p_lut_cn2bn[j*M + i]];
-        }
+	  //            p_cnProcBuf[i] = bnProcBufRes[p_lut_cn2bn[j*M + i]];
+	  p_cnProcBuf[i] = bnProcBufRes[*p_lut_cn2bn++];
+	  }*/
     }
 
     // =====================================================================
     // CN group with 9 BNs
 
-    p_lut_cn2bn += (M*8); // Number of elements of previous group
+    //    p_lut_cn2bn += (M*8); // Number of elements of previous group
+    p_lut_cn2bn += M; // Number of elements of previous group
     M = lut_numCnInCnGroups[6]*Z;
     bitOffsetInGroup = lut_numCnInCnGroups_BG1_R13[6]*NR_LDPC_ZMAX;
 
     for (j=0; j<8; j++)
     {
         p_cnProcBuf = &cnProcBuf[lut_startAddrCnGroups[6] + j*bitOffsetInGroup];
-
+	p_lut_cn2bn = bn2cnmap(p_lut_cn2bn,p_cnProcBuf,bnProcBufRes,M>>4);
+	/*
         for (i=0; i<M; i++)
         {
-            p_cnProcBuf[i] = bnProcBufRes[p_lut_cn2bn[j*M + i]];
-        }
+	  //    p_lut_cn2bn += (M*8); // Number of elements of previous group
+	  p_cnProcBuf[i] = bnProcBufRes[*p_lut_cn2bn++];
+	  }*/
     }
 
     // =====================================================================
     // CN group with 10 BNs
 
-    p_lut_cn2bn += (M*9); // Number of elements of previous group
+    //    p_lut_cn2bn += (M*9); // Number of elements of previous group
+    p_lut_cn2bn += M; // Number of elements of previous group
     M = lut_numCnInCnGroups[7]*Z;
     bitOffsetInGroup = lut_numCnInCnGroups_BG1_R13[7]*NR_LDPC_ZMAX;
 
     for (j=0; j<9; j++)
     {
         p_cnProcBuf = &cnProcBuf[lut_startAddrCnGroups[7] + j*bitOffsetInGroup];
-
+	p_lut_cn2bn = bn2cnmap(p_lut_cn2bn,p_cnProcBuf,bnProcBufRes,M>>4);
+	/*
         for (i=0; i<M; i++)
         {
-            p_cnProcBuf[i] = bnProcBufRes[p_lut_cn2bn[j*M + i]];
-        }
+	  //            p_cnProcBuf[i] = bnProcBufRes[p_lut_cn2bn[j*M + i]];
+	  p_cnProcBuf[i] = bnProcBufRes[*p_lut_cn2bn++]; 
+	  }*/
     }
 
     // =====================================================================
     // CN group with 19 BNs
 
-    p_lut_cn2bn += (M*10); // Number of elements of previous group
+    //    p_lut_cn2bn += (M*10); // Number of elements of previous group
+    p_lut_cn2bn += M; // Number of elements of previous group
     M = lut_numCnInCnGroups[8]*Z;
     bitOffsetInGroup = lut_numCnInCnGroups_BG1_R13[8]*NR_LDPC_ZMAX;
 
     for (j=0; j<19; j++)
     {
         p_cnProcBuf = &cnProcBuf[lut_startAddrCnGroups[8] + j*bitOffsetInGroup];
-
+	p_lut_cn2bn = bn2cnmap(p_lut_cn2bn,p_cnProcBuf,bnProcBufRes,M>>4);
+	/*
         for (i=0; i<M; i++)
         {
-            p_cnProcBuf[i] = bnProcBufRes[p_lut_cn2bn[j*M + i]];
-        }
+	  //            p_cnProcBuf[i] = bnProcBufRes[p_lut_cn2bn[j*M + i]];
+	  p_cnProcBuf[i] = bnProcBufRes[*p_lut_cn2bn++];
+	  }*/
     }
 
+}
+static inline void memcpy_printer(uint32_t* p_lut_cn2bn,int dest0,int M) {
+
+  int dest=0,src=p_lut_cn2bn[0],len=1;
+  for (int i=1;i<M;i++) {
+    if (p_lut_cn2bn[i]!= (1+p_lut_cn2bn[i-1])) {
+      printf("memcpy(%d,%d,%d)\n",dest0+dest,src,len);
+      len=1;
+      dest=i;
+      src=p_lut_cn2bn[i];
+    }
+    else if (i==(M-1)) printf("memcpy(%d,%d,%d)\n",dest0+dest,src,len);
+    else len++;
+    //    printf("p_lut_cn2bn[%d] : %d\n",i,p_lut_cn2bn[i]);
+  }
 }
 
 /**

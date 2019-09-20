@@ -1054,7 +1054,6 @@ void set_default_frame_parms_single(nfapi_nr_config_request_t *config,
         config->sch_config.physical_cell_id.value = 0;
 
         frame_parms->frame_type          = FDD;
-        frame_parms->tdd_config          = 3;
         //frame_parms[CC_id]->tdd_config_S        = 0;
         frame_parms->N_RB_DL             = 100;
         frame_parms->N_RB_UL             = 100;

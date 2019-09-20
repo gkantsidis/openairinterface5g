@@ -135,9 +135,9 @@ void nr_configure_css_dci_initial(nfapi_nr_dl_config_pdcch_parameters_rel15_t* p
 				  nr_frequency_range_e freq_range,
 				  uint8_t rmsi_pdcch_config,
 				  uint8_t ssb_idx,
-          uint8_t k_ssb,
-          uint16_t sfn_ssb,
-          uint8_t n_ssb, /*slot index overlapping the corresponding SSB index*/
+				  uint8_t k_ssb,
+				  uint16_t sfn_ssb,
+				  uint8_t n_ssb, /*slot index overlapping the corresponding SSB index*/
 				  uint16_t nb_slots_per_frame,
 				  uint16_t N_RB)
 {
@@ -357,6 +357,7 @@ void nr_configure_dci_from_pdcch_config(nfapi_nr_dl_config_pdcch_parameters_rel1
   //frequencyDomainResources
   uint8_t count=0, start=0, start_set=0;
   uint64_t bitmap = coreset->frequency_domain_resources;
+
   for (int i=0; i<45; i++)
     if ((bitmap>>(44-i))&1) {
       count++;
@@ -462,3 +463,110 @@ int get_symbolsperslot(nfapi_nr_config_request_t *cfg) {
 
 }
 
+
+extern uint16_t nr_tbs_table[93];
+
+void nr_get_tbs(nfapi_nr_dl_config_dlsch_pdu *dlsch_pdu,
+                nfapi_nr_dl_config_dci_dl_pdu dci_pdu) {
+
+  LOG_D(MAC, "TBS calculation\n");
+
+  nfapi_nr_dl_config_pdcch_parameters_rel15_t params_rel15 = dci_pdu.pdcch_params_rel15;
+  nfapi_nr_dl_config_dlsch_pdu_rel15_t *dlsch_rel15 = &dlsch_pdu->dlsch_pdu_rel15;
+  uint8_t rnti_type = params_rel15.rnti_type;
+  uint8_t N_PRB_oh = ((rnti_type==NFAPI_NR_RNTI_SI)||(rnti_type==NFAPI_NR_RNTI_RA)||(rnti_type==NFAPI_NR_RNTI_P))? 0 : \
+  (dlsch_rel15->x_overhead);
+  uint8_t N_PRB_DMRS = (dlsch_rel15->dmrs_Type==1)?6:4; //This only works for antenna port 1000
+  uint8_t N_sh_symb = dlsch_rel15->nb_symbols;
+  uint8_t Imcs = dlsch_rel15->mcs_idx;
+  uint16_t N_RE_prime = NR_NB_SC_PER_RB*N_sh_symb - N_PRB_DMRS - N_PRB_oh;
+  LOG_D(MAC, "N_RE_prime %d for %d symbols %d DMRS per PRB and %d overhead\n", N_RE_prime, N_sh_symb, N_PRB_DMRS, N_PRB_oh);
+
+  uint16_t N_RE, Ninfo, Ninfo_prime, C, TBS=0, R;
+  uint8_t table_idx, Qm, n, scale;
+
+  //uint8_t mcs_table = config.pdsch_config.mcs_table.value;
+  //uint8_t ss_type = params_rel15.search_space_type;
+  //uint8_t dci_format = params_rel15.dci_format;
+  //get_table_idx(mcs_table, dci_format, rnti_type, ss_type);
+  table_idx = 1;
+  scale = ((table_idx==2)&&((Imcs==20)||(Imcs==26)))?11:10;
+  
+  N_RE = min(156, N_RE_prime)*dlsch_rel15->n_prb;
+  R = nr_get_code_rate(Imcs, table_idx);
+  Qm = nr_get_Qm(Imcs, table_idx);
+  Ninfo = (N_RE*R*Qm*dlsch_rel15->nb_layers)>>scale;
+
+  if (Ninfo <= 3824) {
+    n = max(3, (log2(Ninfo)-6));
+    Ninfo_prime = max(24, (Ninfo>>n)<<n);
+    for (int i=0; i<93; i++)
+      if (nr_tbs_table[i] >= Ninfo_prime) {
+        TBS = nr_tbs_table[i];
+        break;
+      }
+  }
+  else {
+    n = log2(Ninfo-24)-5;
+    Ninfo_prime = max(3840, (ROUNDIDIV((Ninfo-24),(1<<n)))<<n);
+
+    if (R<256) {
+      C = CEILIDIV((Ninfo_prime+24),3816);
+      TBS = (C<<3)*CEILIDIV((Ninfo_prime+24),(C<<3)) - 24;
+    }
+    else {
+      if (Ninfo_prime>8424) {
+        C = CEILIDIV((Ninfo_prime+24),8424);
+        TBS = (C<<3)*CEILIDIV((Ninfo_prime+24),(C<<3)) - 24;
+      }
+      else
+        TBS = ((CEILIDIV((Ninfo_prime+24),8))<<3) - 24;
+    }    
+  }
+
+  dlsch_rel15->coding_rate = R;
+  dlsch_rel15->modulation_order = Qm;
+  dlsch_rel15->transport_block_size = TBS;
+  dlsch_rel15->nb_mod_symbols = N_RE_prime*dlsch_rel15->n_prb*dlsch_rel15->nb_codewords;
+
+  LOG_D(MAC, "TBS %d : N_RE %d  N_PRB_DMRS %d N_sh_symb %d N_PRB_oh %d Ninfo %d Ninfo_prime %d R %d Qm %d table %d scale %d nb_symbols %d\n",
+  TBS, N_RE, N_PRB_DMRS, N_sh_symb, N_PRB_oh, Ninfo, Ninfo_prime, R, Qm, table_idx, scale, dlsch_rel15->nb_mod_symbols);
+}
+
+int extract_startSymbol(int startSymbolAndLength) {
+  int tmp = startSymbolAndLength/14;
+  int tmp2 = startSymbolAndLength%14;
+
+  if (tmp > 0 && tmp < (14-tmp2)) return(tmp2);
+  else                            return(13-tmp2);
+}
+
+int extract_length(int startSymbolAndLength) {
+  int tmp = startSymbolAndLength/14;
+  int tmp2 = startSymbolAndLength%14;
+
+  if (tmp > 0 && tmp < (14-tmp2)) return(tmp);
+  else                            return(15-tmp2);
+}
+ 
+void fill_initialBWPDLtimeDomainAllocaion(nfapi_nr_config_request_t *cfg,int time_domain_assignment,int *k0,int *mappingType,int *start_symbol,int *length) {
+  AssertFatal(time_domain_assignment < cfg->pdsch_config.num_PDSCHTimeDomainResourceAllocations.value,"DL time_domain_assignment %d >= %d\n",
+	      time_domain_assignment,cfg->pdsch_config.num_PDSCHTimeDomainResourceAllocations.value);
+  *k0           = cfg->pdsch_config.PDSCHTimeDomainResourceAllocation_k0[time_domain_assignment].value;
+  *mappingType = cfg->pdsch_config.PDSCHTimeDomainResourceAllocation_mappingType[time_domain_assignment].value;
+  *start_symbol = extract_startSymbol(cfg->pdsch_config.PDSCHTimeDomainResourceAllocation_startSymbolAndLength[time_domain_assignment].value);
+  *length       = extract_length(cfg->pdsch_config.PDSCHTimeDomainResourceAllocation_startSymbolAndLength[time_domain_assignment].value);
+
+}
+
+
+
+void fill_initialBWPULtimeDomainAllocaion(nfapi_nr_config_request_t *cfg,int time_domain_assignment,int *k2, int *mappingType, int *start_symbol,int *length) {
+  AssertFatal(time_domain_assignment < cfg->pusch_config.num_PUSCHTimeDomainResourceAllocations.value,"UL time_domain_assignment %d >= %d\n",
+	      time_domain_assignment,cfg->pusch_config.num_PUSCHTimeDomainResourceAllocations.value);
+
+  *k2           = cfg->pusch_config.PUSCHTimeDomainResourceAllocation_k2[time_domain_assignment].value;
+  *mappingType = cfg->pusch_config.PUSCHTimeDomainResourceAllocation_mappingType[time_domain_assignment].value;
+  *start_symbol = extract_startSymbol(cfg->pusch_config.PUSCHTimeDomainResourceAllocation_startSymbolAndLength[time_domain_assignment].value);
+  *length       = extract_length(cfg->pusch_config.PUSCHTimeDomainResourceAllocation_startSymbolAndLength[time_domain_assignment].value);
+}

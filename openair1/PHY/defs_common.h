@@ -653,6 +653,10 @@ typedef struct LTE_DL_FRAME_PARMS {
 #endif
   /// Number of samples in a subframe
   uint32_t samples_per_tti;
+  /// Number of samples in a subframe
+  uint32_t samples_per_subframe;
+  /// Number of samples in a slot
+  uint32_t samples_per_slot;
   /// Number of OFDM/SC-FDMA symbols in one subframe (to be modified to account for potential different in UL/DL)
   uint16_t symbols_per_tti;
   /// Number of OFDM symbols in DL portion of S-subframe

@@ -261,6 +261,20 @@ void schedule_nr_SRS(module_id_t module_idP, frame_t frameP, sub_frame_t subfram
   }
 }
 */
+
+/*
+void schedule_nr_prach(module_id_t module_idP, frame_t frameP, sub_frame_t subframeP) {
+
+  gNB_MAC_INST *gNB = RC.nrmac[module_idP];
+
+  // schedule PRACH for iniital BWP 
+
+  if (is_initialBWP_prach_subframe(frameP,subframeP)<0) return;
+ 
+  // fill FAPI
+}
+*/
+
 void copy_nr_ulreq(module_id_t module_idP, frame_t frameP, sub_frame_t slotP)
 {
   int CC_id;
@@ -334,8 +348,9 @@ void gNB_dlsch_ulsch_scheduler(module_id_t module_idP,
                                     *cfg))
           nr_schedule_uss_dlsch_phytest(module_idP, frameP, slotP);
 
-      rnti = UE_RNTI(module_idP, i);
-      CC_id = UE_PCCID(module_idP, i);
+      
+      rnti = 0;//UE_RNTI(module_idP, i);
+      CC_id = 0;//UE_PCCID(module_idP, i);
       //int spf = get_spf(cfg);
   
       if (((frameP&127) == 0) && (slotP == 0)) {
@@ -350,10 +365,10 @@ void gNB_dlsch_ulsch_scheduler(module_id_t module_idP,
         (UE_list->UE_sched_ctrl[i].pucch1_snr[CC_id] - 128) / 2);
       }
       
-      RC.gNB[module_idP][CC_id]->pusch_stats_bsr[i][to_absslot(cfg,frameP,slotP)] = -63;
+      RC.gNB[module_idP]->pusch_stats_bsr[i][to_absslot(cfg,frameP,slotP)] = -63;
       
       if (i == UE_list->head)
-        VCD_SIGNAL_DUMPER_DUMP_VARIABLE_BY_NAME(VCD_SIGNAL_DUMPER_VARIABLES_UE0_BSR,RC.gNB[module_idP][CC_id]->
+        VCD_SIGNAL_DUMPER_DUMP_VARIABLE_BY_NAME(VCD_SIGNAL_DUMPER_VARIABLES_UE0_BSR,RC.gNB[module_idP]->
                                                 pusch_stats_bsr[i][to_absslot(cfg,frameP,slotP)]);
       
       // increment this, it is cleared when we receive an sdu
@@ -374,7 +389,7 @@ void gNB_dlsch_ulsch_scheduler(module_id_t module_idP,
         if(RC.nrmac[module_idP]->UE_list.UE_sched_ctrl[i].ue_reestablishment_reject_timer >=
           RC.nrmac[module_idP]->UE_list.UE_sched_ctrl[i].ue_reestablishment_reject_timer_thres) {
           RC.nrmac[module_idP]->UE_list.UE_sched_ctrl[i].ue_reestablishment_reject_timer = 0;
-        
+	  /*
           for (int ue_id_l = 0; ue_id_l < MAX_MOBILES_PER_GNB; ue_id_l++) {
             if (reestablish_rnti_map[ue_id_l][0] == rnti) {
             // clear currentC-RNTI from map
@@ -382,11 +397,11 @@ void gNB_dlsch_ulsch_scheduler(module_id_t module_idP,
             reestablish_rnti_map[ue_id_l][1] = 0;
             break;
             }
-          }
+	    }*/
       
           // Note: This should not be done in the MAC!
           for (int ii=0; ii<MAX_MOBILES_PER_GNB; ii++) {
-            NR_gNB_ULSCH_t *ulsch = RC.gNB[module_idP][CC_id]->ulsch[ii][0];       
+            NR_gNB_ULSCH_t *ulsch = RC.gNB[module_idP]->ulsch[ii][0];       
             if((ulsch != NULL) && (ulsch->rnti == rnti)){
               LOG_W(MAC, "TODO: clean_eNb_ulsch UE %x \n", rnti);
               clean_gNB_ulsch(ulsch);
@@ -394,7 +409,7 @@ void gNB_dlsch_ulsch_scheduler(module_id_t module_idP,
           }
 
           for (int ii=0; ii<MAX_MOBILES_PER_GNB; ii++) {
-            NR_gNB_DLSCH_t *dlsch = RC.gNB[module_idP][CC_id]->dlsch[ii][0];
+            NR_gNB_DLSCH_t *dlsch = RC.gNB[module_idP]->dlsch[ii][0];
             if((dlsch != NULL) && (dlsch->rnti == rnti)){
               LOG_W(MAC, "TODO: clean_eNb_dlsch UE %x \n", rnti);
               clean_gNB_dlsch(dlsch);
@@ -417,15 +432,16 @@ void gNB_dlsch_ulsch_scheduler(module_id_t module_idP,
               }
             }
           }
-          rrc_mac_remove_ue(module_idP,rnti);
+	  //          rrc_mac_remove_ue(module_idP,rnti);
         }
       } //END if (RC.nrmac[module_idP]->UE_list.UE_sched_ctrl[i].ue_reestablishment_reject_timer > 0)
+
     } //END if (UE_list->active[i])
   } //END for (i = 0; i < MAX_MOBILES_PER_GNB; i++)
   
   PROTOCOL_CTXT_SET_BY_MODULE_ID(&ctxt, module_idP, ENB_FLAG_YES,NOT_A_RNTI, frameP, slotP,module_idP);
   
-  pdcp_run(&ctxt);
+  //  pdcp_run(&ctxt);
 
   //rrc_rx_tx(&ctxt, CC_id);
 

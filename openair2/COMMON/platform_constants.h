@@ -62,6 +62,7 @@
 // overwrite the previous deinitions
 
 #    define MAX_MODULES                NB_MODULES_MAX
+#define MAX_NR_RRC_UE_CONTEXTS 64
 
 #ifndef UE_EXPANSION
 // TODO:L2 FAPI simulator.
