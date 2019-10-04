@@ -656,6 +656,32 @@ typedef struct {
 	nfapi_nr_dl_config_dlsch_pdu_rel15_t dlsch_pdu_rel15;
 } nfapi_nr_dl_config_dlsch_pdu;
 
+//for csi-rs_pdu:
+
+//table 3-39
+typedef struct
+{
+uint16_t bwp_size;//
+uint16_t bwp_start;//
+uint8_t  subcarrier_spacing;//
+uint8_t  cyclic_prefix;//
+uint16_t start_rb;
+uint16_t nr_of_rbs;
+uint8_t  csi_type;//Value: 0:TRS 1:CSI-RS NZP 2:CSI-RS ZP
+uint8_t  row;//Row entry into the CSI Resource location table. [TS38.211, sec 7.4.1.5.3 and table 7.4.1.5.3-1] Value: 1-18
+uint16_t freq_domain;//Value: Up to the 12 LSBs, actual size is determined by the Row parameter
+uint8_t  symb_l0;//The time domain location l0 and firstOFDMSymbolInTimeDomain Value: 0->13
+uint8_t  symb_l1;//
+uint8_t  cdm_type;
+uint8_t  freq_density;//The density field, p and comb offset (for dot5).0: dot5 (even RB), 1: dot5 (odd RB), 2: one, 3: three
+uint16_t scramb_id;//ScramblingID of the CSI-RS [TS38.214, sec 5.2.2.3.1] Value: 0->1023
+//tx power info
+uint8_t  power_control_offset;//Ratio of PDSCH EPRE to NZP CSI-RSEPRE Value :0->23 representing -8 to 15 dB in 1dB steps
+uint8_t  power_control_offset_ss;//Ratio of SSB/PBCH block EPRE to NZP CSI-RS EPRES 0: -3dB, 1: 0dB, 2: 3dB, 3: 6dB
+
+} nfapi_nr_csi_rs_pdu_t;
+
+
 typedef struct {
   nfapi_tl_t tl;
   nfapi_nr_search_space_t           pagingSearchSpace;
