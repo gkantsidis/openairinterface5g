@@ -59,8 +59,11 @@ oom:
 
 void nr_rlc_free_sdu_segment(nr_rlc_sdu_segment_t *sdu)
 {
-  free(sdu->sdu->data);
-  free(sdu->sdu);
+  sdu->sdu->ref_count--;
+  if (sdu->sdu->ref_count == 0) {
+    free(sdu->sdu->data);
+    free(sdu->sdu);
+  }
   free(sdu);
 }
 

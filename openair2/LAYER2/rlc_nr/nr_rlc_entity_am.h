@@ -24,6 +24,7 @@
 
 #include "nr_rlc_entity.h"
 #include "nr_rlc_sdu.h"
+#include "nr_rlc_pdu.h"
 
 typedef struct {
   nr_rlc_entity_t common;
@@ -39,6 +40,14 @@ typedef struct {
 
   int sn_modulus;
   int window_size;
+
+  /* runtime rx */
+  int rx_next;
+  int rx_next_status_trigger;
+  int rx_highest_status;
+  int rx_next_highest;
+
+  int status_triggered;
 
   /* runtime tx */
   int tx_next;
@@ -57,7 +66,9 @@ typedef struct {
   uint64_t t_status_prohibit_start;
 
   /* rx management */
-  int rx_maxsize;
+  nr_rlc_pdu_t *rx_list;
+  int          rx_size;
+  int          rx_maxsize;
 
   /* tx management */
   nr_rlc_sdu_segment_t *tx_list;
@@ -66,14 +77,22 @@ typedef struct {
   int                  tx_maxsize;
 
   nr_rlc_sdu_segment_t *wait_list;
+  nr_rlc_sdu_segment_t *wait_end;
+
   nr_rlc_sdu_segment_t *retransmit_list;
+  nr_rlc_sdu_segment_t *retransmit_end;
 
 } nr_rlc_entity_am_t;
 
 void nr_rlc_entity_am_recv_sdu(nr_rlc_entity_t *entity,
                                char *buffer, int size,
                                int sdu_id);
+void nr_rlc_entity_am_recv_pdu(nr_rlc_entity_t *_entity, 
+                               char *buffer, int size);
+nr_rlc_entity_buffer_status_t nr_rlc_entity_am_buffer_status(
+    nr_rlc_entity_t *entity, int maxsize);
 int nr_rlc_entity_am_generate_pdu(nr_rlc_entity_t *_entity, 
                                   char *buffer, int size);
+void nr_rlc_entity_am_set_time(nr_rlc_entity_t *_entity, uint64_t now);
 
 #endif /* _NR_RLC_ENTITY_AM_H_ */

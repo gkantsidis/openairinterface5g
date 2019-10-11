@@ -19,34 +19,18 @@
  *      contact@openairinterface.org
  */
 
-#ifndef _NR_RLC_SDU_H_
-#define _NR_RLC_SDU_H_
+#ifndef _NR_RLC_ENTITY_UM_H_
+#define _NR_RLC_ENTITY_UM_H_
 
-typedef struct nr_rlc_sdu_t {
-  int sn;
-  int upper_layer_id;
-  char *data;
-  int size;
-  int retx_count;
+#include "nr_rlc_entity.h"
+#include "nr_rlc_sdu.h"
 
-  int ref_count;      /* incremented each time the SDU is segmented */
-} nr_rlc_sdu_t;
+typedef struct {
+  nr_rlc_entity_t common;
 
-typedef struct nr_rlc_sdu_segment_t {
-  nr_rlc_sdu_t *sdu;
-  int size;
-  int so;
-  int is_first;
-  int is_last;
-  struct nr_rlc_sdu_segment_t *next;
-} nr_rlc_sdu_segment_t;
+  /* set to the latest know time by the user of the module. Unit: ms */
+  uint64_t t_current;
 
-nr_rlc_sdu_segment_t *nr_rlc_new_sdu(
-    char *buffer, int size,
-    int upper_layer_id);
-void nr_rlc_free_sdu_segment(nr_rlc_sdu_segment_t *sdu);
-void nr_rlc_sdu_segment_list_add(nr_rlc_sdu_segment_t **list,
-                                 nr_rlc_sdu_segment_t **end,
-                                 nr_rlc_sdu_segment_t *sdu);
+} nr_rlc_entity_um_t;
 
-#endif /* _NR_RLC_SDU_H_ */
+#endif /* _NR_RLC_ENTITY_UM_H_ */

@@ -75,7 +75,18 @@ nr_rlc_entity_t *new_nr_rlc_entity_am(
   ret->sn_modulus = 1 << ret->sn_field_length;
   ret->window_size = ret->sn_modulus / 2;
 
-  ret->common.recv_sdu = nr_rlc_entity_am_recv_sdu;
+  ret->common.recv_pdu      = nr_rlc_entity_am_recv_pdu;
+  ret->common.buffer_status = nr_rlc_entity_am_buffer_status;
+  ret->common.recv_sdu      = nr_rlc_entity_am_recv_sdu;
+  ret->common.generate_pdu  = nr_rlc_entity_am_generate_pdu;
+  ret->common.set_time      = nr_rlc_entity_am_set_time;
+
+  ret->common.deliver_sdu                  = deliver_sdu;
+  ret->common.deliver_sdu_data             = deliver_sdu_data;
+  ret->common.sdu_successful_delivery      = sdu_successful_delivery;
+  ret->common.sdu_successful_delivery_data = sdu_successful_delivery_data;
+  ret->common.max_retx_reached             = max_retx_reached;
+  ret->common.max_retx_reached_data        = max_retx_reached_data;
 
   return (nr_rlc_entity_t *)ret;
 }
