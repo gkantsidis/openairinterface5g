@@ -368,16 +368,20 @@ int test_ldpc(short No_iteration,
     }
 
     if (ntrials == 1)
+    {
       for (j = 0; j < n_segments; j++)
+      {
         for (i = 0; i < block_length + (configuration.nrows - no_punctured_columns) * Zc - removed_bit; i++)
+        {
           if (channel_input[j][i] != channel_input_optim[j][i])
           {
             printf("differ in seg %d pos %d (%d,%d)\n", j, i, channel_input[j][i], channel_input_optim[j][i]);
             return (-1);
           }
-    //else{
-    // printf("NOT differ in seg %d pos %d (%d,%d)\n",j,i,channel_input[j][i],channel_input_optim[j][i]);
-    // }
+        }
+      }
+    }
+
     if (trial == 0)
     {
       printf("nrows: %d\n", configuration.nrows);
@@ -404,6 +408,14 @@ int test_ldpc(short No_iteration,
           if ((i & 0xf) == 0)
             printf("\ne %d..%d:    ", i, i + 15);
 #endif
+          /*
+          if ((i - 2*Zc) > (int)((float)block_length * 1.10))
+          {
+            modulated_input[j][i] = 0.0;
+            channel_output_fixed[j][i] = 0.0;
+            break;
+          }
+          */
 
           if (channel_input[j][i - 2 * Zc] == 0)
             modulated_input[j][i] = 1.0; ///sqrt(2);  //QPSK
@@ -468,7 +480,7 @@ int test_ldpc(short No_iteration,
       //count errors
       for (j = 0; j < n_segments; j++)
       {
-        for (i = 0; i<block_length>> 3; i++)
+        for (i = 0; i < (block_length >> 3); i++)
         {
           //printf("block_length>>3: %d \n",block_length>>3);
           /// printf("i: %d \n",i);
