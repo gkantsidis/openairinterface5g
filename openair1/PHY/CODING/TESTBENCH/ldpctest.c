@@ -412,7 +412,8 @@ ErrorStatistics test_ldpc (short No_iteration,
 
                     channel_output_fixed[j][i] =
                         (char) quantize (sigma / 4.0 / 4.0,
-                                         modulated_input[j][i] + sigma * gaussdouble (0.0, 1.0), qbits);
+                                         modulated_input[j][i] + sigma * gaussdouble (0.0, 1.0),
+                                         qbits);
 
                     //Uncoded BER
                     if (channel_output_fixed[j][i] < 0)
