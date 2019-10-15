@@ -220,11 +220,65 @@ short find_Zc(short block_length, short Kb)
   return Zc;
 }
 
+typedef enum _Channel {
+    QPSK_AWG = 1
+} Channel;
+
+typedef struct _QPSK_AWG_Channel
+{
+    double SNR;
+    unsigned char qbits;
+} QPSK_AWG_Channel;
+
+void
+apply_qpsk_awg_channel(
+    QPSK_AWG_Channel * channel,
+    char * input, int start_input, int end_input,
+    char * output, int start_output, int end_output)
+{
+    double sigma;
+    sigma = 1.0 / sqrt (2 * channel->SNR);
+
+    for (int i = start_input, j = start_output; i < end_input && j < end_output; i++, j++)
+    {
+        double value = (input[i] == 0)?1.0:-1.0;
+
+        output[j] =
+            (char) quantize (sigma / 4.0 / 4.0,
+                              value + sigma * gaussdouble (0.0, 1.0),
+                              channel->qbits);
+    }
+}
+
+void
+apply_channel(
+    Channel channel_type, void * channel,
+    char * input, int start_input, int end_input,
+    char * output, int start_output, int end_output
+)
+{
+    switch (channel_type)
+    {
+    case QPSK_AWG:
+        apply_qpsk_awg_channel(
+            (QPSK_AWG_Channel *)channel,
+            input, start_input, end_input,
+            output, start_output, end_output);
+        break;
+
+    default:
+        fprintf(stderr, "Unknown channel");
+        abort();
+        break;
+    }
+}
+
+
 ErrorStatistics test_ldpc (short No_iteration,
                            int nom_rate,
                            int denom_rate,
-                           double SNR,
-                           unsigned char qbits,
+                           Channel channel_type,
+                           void * channel,
                            short block_length,
                            unsigned int ntrials,
                            int n_segments,
@@ -236,9 +290,6 @@ ErrorStatistics test_ldpc (short No_iteration,
     double n_iter_std = 0;
     int n_iter_max = 0;
     unsigned int segment_bler = 0;
-
-    double sigma;
-    sigma = 1.0 / sqrt (2 * SNR);
 
     opp_enabled = 1;
     cpu_freq_GHz = get_cpu_freq_GHz ();
@@ -252,7 +303,6 @@ ErrorStatistics test_ldpc (short No_iteration,
     unsigned char *channel_output_uncoded[MAX_NUM_DLSCH_SEGMENTS];
     unsigned char *channel_input_optim[MAX_NUM_DLSCH_SEGMENTS];
     double *channel_output;
-    double *modulated_input[MAX_NUM_DLSCH_SEGMENTS];
     char *channel_output_fixed[MAX_NUM_DLSCH_SEGMENTS];
     unsigned int i, j, trial = 0;
     int no_punctured_columns, removed_bit;
@@ -281,7 +331,6 @@ ErrorStatistics test_ldpc (short No_iteration,
         channel_output_uncoded[j] = (unsigned char *) malloc16 (sizeof (unsigned char) * 68 * 384);
         estimated_output[j] = (unsigned char *) malloc16 (sizeof (unsigned char) * block_length);
         estimated_output_bit[j] = (unsigned char *) malloc16 (sizeof (unsigned char) * block_length);
-        modulated_input[j] = (double *) malloc16 (sizeof (double) * 68 * 384);
         channel_output_fixed[j] = (char *) malloc16 (sizeof (char) * 68 * 384);
     }
     channel_output = (double *) calloc (68 * 384, sizeof (double));
@@ -332,7 +381,6 @@ ErrorStatistics test_ldpc (short No_iteration,
         (int) ((configuration.nrows - 2) * Zc + block_length -
                block_length * (1 /
                                ((float) nom_rate / (float) denom_rate))) / Zc;
-    //  printf("puncture:%d\n",no_punctured_columns);
 
     removed_bit =
         (configuration.nrows - no_punctured_columns - 2) * Zc +
@@ -396,25 +444,20 @@ ErrorStatistics test_ldpc (short No_iteration,
 
         if (1) {                // Transmitting one segment
             for (j = 0; j < n_segments; j++) {
+                int last_bit_pos =
+                    (configuration.Kb + configuration.nrows - no_punctured_columns) * Zc - removed_bit;
+
+                apply_qpsk_awg_channel(
+                    channel,
+                    channel_input[j], 0, last_bit_pos - 2 * Zc,
+                    channel_output_fixed[j], 2 * Zc, last_bit_pos
+                );
+
                 for (i = 2 * Zc;
                      i <
                      (configuration.Kb + configuration.nrows -
-                      no_punctured_columns) * Zc - removed_bit; i++) {
-#ifdef DEBUG_CODER
-                    if ((i & 0xf) == 0)
-                        printf ("\ne %d..%d:    ", i, i + 15);
-#endif
-
-                    if (channel_input[j][i - 2 * Zc] == 0)
-                        modulated_input[j][i] = 1.0;    ///sqrt(2);  //QPSK
-                    else
-                        modulated_input[j][i] = -1.0;   ///sqrt(2);
-
-                    channel_output_fixed[j][i] =
-                        (char) quantize (sigma / 4.0 / 4.0,
-                                         modulated_input[j][i] + sigma * gaussdouble (0.0, 1.0),
-                                         qbits);
-
+                      no_punctured_columns) * Zc - removed_bit; i++)
+                {
                     //Uncoded BER
                     if (channel_output_fixed[j][i] < 0)
                         channel_output_uncoded[j][i] = 1;       //QPSK demod
@@ -504,7 +547,6 @@ ErrorStatistics test_ldpc (short No_iteration,
         free16(channel_input[j]);
         free16(channel_output_uncoded[j]);
         free16(channel_input_optim[j]);
-        free16(modulated_input[j]);
         free16(channel_output_fixed[j]);
         free16(estimated_output[j]);
         free16(estimated_output_bit[j]);
@@ -668,6 +710,9 @@ int main (int argc, char *argv[])
     fprintf (fd,
              "SNR BLER BER UNCODED_BER ENCODER_MEAN ENCODER_STD ENCODER_MAX DECODER_TIME_MEAN DECODER_TIME_STD DECODER_TIME_MAX DECODER_ITER_MEAN DECODER_ITER_STD DECODER_ITER_MAX\n");
 
+    QPSK_AWG_Channel channel;
+    channel.qbits = qbits;
+
     for (SNR = SNR0; SNR < SNR0 + 20.0; SNR += SNR_step) {
         //reset_meas(&time_optim);
         //reset_meas(&time_decoder);
@@ -677,11 +722,13 @@ int main (int argc, char *argv[])
         else
             SNR_lin = pow (10, SNR / 10.0) * nom_rate / denom_rate;
         printf ("Linear SNR: %f\n", SNR_lin);
+        channel.SNR = SNR_lin;
+
         ErrorStatistics errors = test_ldpc (No_iteration,
                                             nom_rate,
                                             denom_rate,
-                                            SNR_lin,    // noise standard deviation
-                                            qbits,
+                                            QPSK_AWG,
+                                            &channel,
                                             block_length,       // block length bytes
                                             n_trials,
                                             n_segments,
