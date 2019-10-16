@@ -1,6 +1,10 @@
 #include <stdint.h>
 #include <stdio.h>
+
+#ifdef _WINDOWS
 #include <intrin.h>
+#endif
+
 #include <nrLDPC_decoder.h>
 #include "nrLDPC_mPass.h"
 
