@@ -221,23 +221,24 @@ short find_Zc(short block_length, short Kb)
 }
 
 typedef enum _Channel {
-    QPSK_AWG = 1
+    Binary_AWG = 1
 } Channel;
 
-typedef struct _QPSK_AWG_Channel
+typedef struct _AWG_Channel
 {
     double SNR;
     unsigned char qbits;
-} QPSK_AWG_Channel;
+} AWG_Channel;
 
-void
-apply_qpsk_awg_channel(
-    QPSK_AWG_Channel * channel,
+int
+apply_binary_awg_channel(
+    AWG_Channel * channel,
     char * input, int start_input, int end_input,
     char * output, int start_output, int end_output)
 {
     double sigma;
     sigma = 1.0 / sqrt (2 * channel->SNR);
+    int uncoded_errors = 0;
 
     for (int i = start_input, j = start_output; i < end_input && j < end_output; i++, j++)
     {
@@ -247,10 +248,18 @@ apply_qpsk_awg_channel(
             (char) quantize (sigma / 4.0 / 4.0,
                               value + sigma * gaussdouble (0.0, 1.0),
                               channel->qbits);
+
+        char uncoded = (char)((output[j] >= 0)?0:1);
+        if (uncoded != input[i])
+        {
+            uncoded_errors++;
+        }
     }
+
+    return uncoded_errors;
 }
 
-void
+int
 apply_channel(
     Channel channel_type, void * channel,
     char * input, int start_input, int end_input,
@@ -259,12 +268,11 @@ apply_channel(
 {
     switch (channel_type)
     {
-    case QPSK_AWG:
-        apply_qpsk_awg_channel(
-            (QPSK_AWG_Channel *)channel,
+    case Binary_AWG:
+        return apply_binary_awg_channel(
+            (AWG_Channel *)channel,
             input, start_input, end_input,
             output, start_output, end_output);
-        break;
 
     default:
         fprintf(stderr, "Unknown channel");
@@ -447,28 +455,13 @@ ErrorStatistics test_ldpc (short No_iteration,
                 int last_bit_pos =
                     (configuration.Kb + configuration.nrows - no_punctured_columns) * Zc - removed_bit;
 
-                apply_qpsk_awg_channel(
-                    channel,
+                int uncoded_errors = apply_channel(
+                    channel_type, channel,
                     channel_input[j], 0, last_bit_pos - 2 * Zc,
                     channel_output_fixed[j], 2 * Zc, last_bit_pos
                 );
 
-                for (i = 2 * Zc;
-                     i <
-                     (configuration.Kb + configuration.nrows -
-                      no_punctured_columns) * Zc - removed_bit; i++)
-                {
-                    //Uncoded BER
-                    if (channel_output_fixed[j][i] < 0)
-                        channel_output_uncoded[j][i] = 1;       //QPSK demod
-                    else
-                        channel_output_uncoded[j][i] = 0;
-
-                    if (channel_output_uncoded[j][i] !=
-                        channel_input[j][i - 2 * Zc]) {
-                        errors.errors_bit_uncoded++;
-                    }
-                }
+                errors.errors_bit_uncoded += uncoded_errors;
             }                   // End segments
 
 #ifdef DEBUG_CODER
@@ -607,10 +600,11 @@ int main (int argc, char *argv[])
     int test_uncoded = 0;
 
     TimeStatistics times;
+    Channel channel_type = Binary_AWG;
 
     short Zc;
 
-    while ((c = getopt (argc, argv, "q:r:s:S:l:n:d:i:t:u:h")) != -1)
+    while ((c = getopt (argc, argv, "q:r:s:S:l:n:d:i:t:u:c:h")) != -1)
     {
         switch (c) {
         case 'q':
@@ -653,6 +647,10 @@ int main (int argc, char *argv[])
             test_uncoded = atoi (optarg);
             break;
 
+        case 'c':
+            channel_type = (Channel) atoi(optarg);
+            break;
+
         case 'h':
         default:
             printf ("CURRENTLY SUPPORTED CODE RATES: \n");
@@ -671,6 +669,7 @@ int main (int argc, char *argv[])
             printf ("-t SNR simulation step, Default: 0.1\n");
             printf ("-i Max decoder iterations, Default: 5\n");
             printf ("-u Set SNR per coded bit, Default: 0\n");
+            printf ("-c Channel to use, Default: 1 (Binary_AWG)\n");
             exit (1);
             break;
         }
@@ -710,13 +709,10 @@ int main (int argc, char *argv[])
     fprintf (fd,
              "SNR BLER BER UNCODED_BER ENCODER_MEAN ENCODER_STD ENCODER_MAX DECODER_TIME_MEAN DECODER_TIME_STD DECODER_TIME_MAX DECODER_ITER_MEAN DECODER_ITER_STD DECODER_ITER_MAX\n");
 
-    QPSK_AWG_Channel channel;
+    AWG_Channel channel;
     channel.qbits = qbits;
 
     for (SNR = SNR0; SNR < SNR0 + 20.0; SNR += SNR_step) {
-        //reset_meas(&time_optim);
-        //reset_meas(&time_decoder);
-        //n_iter_stats_t dec_iter = {0, 0, 0};
         if (test_uncoded == 1)
             SNR_lin = pow (10, SNR / 10.0);
         else
@@ -727,7 +723,7 @@ int main (int argc, char *argv[])
         ErrorStatistics errors = test_ldpc (No_iteration,
                                             nom_rate,
                                             denom_rate,
-                                            QPSK_AWG,
+                                            channel_type,
                                             &channel,
                                             block_length,       // block length bytes
                                             n_trials,
@@ -789,10 +785,8 @@ int main (int argc, char *argv[])
                  (double) times.time_optim.diff / times.time_optim.trials /
                  1000.0 / cpu_freq_GHz,
                  sqrt ((double) times.time_optim.diff_square /
-                       times.time_optim.trials / pow (1000,
-                                                 2) /
-                       pow (cpu_freq_GHz,
-                            2) -
+                       times.time_optim.trials / pow (1000, 2) /
+                       pow (cpu_freq_GHz, 2) -
                        pow ((double) times.time_optim.diff /
                             times.time_optim.trials / 1000.0 /
                             cpu_freq_GHz, 2)),
@@ -800,10 +794,8 @@ int main (int argc, char *argv[])
                  (double) times.time_decoder.diff / times.time_decoder.trials /
                  1000.0 / cpu_freq_GHz,
                  sqrt ((double) times.time_decoder.diff_square /
-                       times.time_decoder.trials / pow (1000,
-                                                   2) /
-                       pow (cpu_freq_GHz,
-                            2) -
+                       times.time_decoder.trials / pow (1000, 2) /
+                       pow (cpu_freq_GHz, 2) -
                        pow ((double) times.time_decoder.diff /
                             times.time_decoder.trials / 1000.0 /
                             cpu_freq_GHz, 2)),
