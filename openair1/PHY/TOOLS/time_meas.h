@@ -22,15 +22,21 @@
 #ifndef __TIME_MEAS_DEFS__H__
 #define __TIME_MEAS_DEFS__H__
 
+#ifndef _WINDOWS
 #include <unistd.h>
+#endif
 #include <math.h>
 #include <stdint.h>
 #include <time.h>
 #include <errno.h>
 #include <stdio.h>
+#ifndef _WINDOWS
 #include <pthread.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
+#else
+#include <intrin.h>
+#endif
 // global var to enable openair performance profiler
 extern int opp_enabled;
 double cpu_freq_GHz;
@@ -56,6 +62,11 @@ typedef struct {
 } time_stats_t;
 #endif
 
+#ifdef _WINDOWS
+#define __attribute__(x)
+#pragma intrinsic(__rdtsc)
+#endif
+
 static inline void start_meas(time_stats_t *ts) __attribute__((always_inline));
 static inline void stop_meas(time_stats_t *ts) __attribute__((always_inline));
 
@@ -68,16 +79,24 @@ double get_cpu_freq_GHz(void);
 #if defined(__i386__)
 static inline unsigned long long rdtsc_oai(void) __attribute__((always_inline));
 static inline unsigned long long rdtsc_oai(void) {
-  unsigned long long int x;
-  __asm__ volatile (".byte 0x0f, 0x31" : "=A" (x));
-  return x;
+#ifndef _WINDOWS
+    unsigned long long int x;
+    __asm__ volatile (".byte 0x0f, 0x31" : "=A" (x));
+    return x;
+#else
+    return __rdtsc();
+#endif
 }
 #elif defined(__x86_64__)
 static inline unsigned long long rdtsc_oai(void) __attribute__((always_inline));
 static inline unsigned long long rdtsc_oai(void) {
-  unsigned long long a, d;
-  __asm__ volatile ("rdtsc" : "=a" (a), "=d" (d));
-  return (d<<32) | a;
+#ifndef _WINDOWS
+    unsigned long long a, d;
+    __asm__ volatile ("rdtsc" : "=a" (a), "=d" (d));
+    return (d << 32) | a;
+#else
+  return __rdtsc();
+#endif
 }
 
 #elif defined(__arm__)

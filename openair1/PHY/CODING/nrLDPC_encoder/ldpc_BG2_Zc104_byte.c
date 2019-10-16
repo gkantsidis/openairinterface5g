@@ -136,4 +136,8 @@ static inline void ldpc_BG2_Zc104_byte(uint8_t *c,uint8_t *d) {
 //row: 41
      d2[533]=_mm_xor_si64(c2[1572],_mm_xor_si64(c2[1312],_mm_xor_si64(c2[10],_mm_xor_si64(c2[1050],_mm_xor_si64(c2[556],_mm_xor_si64(c2[296],_mm_xor_si64(c2[288],_mm_xor_si64(c2[558],_mm_xor_si64(c2[1856],_mm_xor_si64(c2[1875],_mm_xor_si64(c2[1615],_mm_xor_si64(c2[1612],_mm_xor_si64(c2[1120],_mm_xor_si64(c2[860],_mm_xor_si64(c2[349],_mm_xor_si64(c2[1378],_mm_xor_si64(c2[372],_mm_xor_si64(c2[1408],_mm_xor_si64(c2[114],_mm_xor_si64(c2[1177],_mm_xor_si64(c2[1438],_mm_xor_si64(c2[1441],_mm_xor_si64(c2[942],_mm_xor_si64(c2[682],_mm_xor_si64(c2[1980],_mm_xor_si64(c2[423],_mm_xor_si64(c2[2011],_mm_xor_si64(c2[450],_mm_xor_si64(c2[1257],_mm_xor_si64(c2[739],_mm_xor_si64(c2[1513],_mm_xor_si64(c2[1283],_mm_xor_si64(c2[1023],_mm_xor_si64(c2[758],c2[1795]))))))))))))))))))))))))))))))))));
   }
+
+#ifdef _WINDOWS
+  _mm_empty();
+#endif
 }

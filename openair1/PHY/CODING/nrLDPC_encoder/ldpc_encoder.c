@@ -35,7 +35,9 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#ifndef _WINDOWS
 #include <types.h>
+#endif
 #include "defs.h"
 
 short *choose_generator_matrix(short BG,short Zc);

@@ -363,8 +363,22 @@ short *choose_generator_matrix(short BG,short Zc)
 
 int ldpc_encoder_orig(unsigned char *test_input,unsigned char *channel_input,short block_length, short BG,unsigned char gen_code)
 {
+    int result = 0;
+
+#ifndef _WINDOWS
   unsigned char c[22*384]; //padded input, unpacked, max size
   unsigned char d[68*384]; //coded output, unpacked, max size
+#else
+    unsigned char * c = (unsigned char *) malloc(22 * 384 * sizeof(unsigned char)); //padded input, unpacked, max size
+    unsigned char * d = (unsigned char *) malloc(68 * 384 * sizeof(unsigned char)); //coded output, unpacked, max size
+
+    if (c == NULL || d == NULL)
+    {
+        result = -2;
+        goto cleanup_and_return;
+    }
+#endif
+
   unsigned char channel_temp,temp;
   short *Gen_shift_values, *no_shift_values, *pointer_shift_values;
   short Zc;
@@ -422,13 +436,15 @@ int ldpc_encoder_orig(unsigned char *test_input,unsigned char *channel_input,sho
   }
   if (Zc==0) {
     printf("ldpc_encoder_orig: could not determine lifting size\n");
-    return(-1);
+    result = -1;
+    goto cleanup_and_return;
   }
 
   Gen_shift_values=choose_generator_matrix(BG,Zc);
   if (Gen_shift_values==NULL) {
     printf("ldpc_encoder_orig: could not find generator matrix\n");
-    return(-1);
+    result = -1;
+    goto cleanup_and_return;
   }
 
   //printf("ldpc_encoder_orig: BG %d, Zc %d, Kb %d\n",BG, Zc, Kb);
@@ -622,5 +638,10 @@ int ldpc_encoder_orig(unsigned char *test_input,unsigned char *channel_input,sho
   memcpy(&channel_input[0], &c[2*Zc], (block_length-2*Zc)*sizeof(unsigned char));
   memcpy(&channel_input[block_length-2*Zc], &d[0], ((nrows-no_punctured_columns) * Zc-removed_bit)*sizeof(unsigned char));
   //memcpy(channel_input,c,Kb*Zc*sizeof(unsigned char));
-  return 0;
+
+cleanup_and_return:
+  if (c != NULL) free(c);
+  if (d != NULL) free(d);
+
+  return result;
 }

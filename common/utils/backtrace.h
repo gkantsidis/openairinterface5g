@@ -29,7 +29,10 @@ extern "C" {
 
 void display_backtrace(void);
 
-void backtrace_handle_signal(siginfo_t *info);
+#ifndef _WINDOWS
+void backtrace_handle_signal(siginfo_t* info);
+#endif // !_WINDOWS
+
 #ifdef __cplusplus
 }
 #endif

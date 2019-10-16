@@ -33,10 +33,16 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#ifndef _WINDOWS
 #include <types.h>
+#endif
 #include "assertions.h"
 #include "PHY/TOOLS/time_meas.h"
 #include "defs.h"
+
+#ifdef _WINDOWS
+#include <immintrin.h>
+#endif
 
 //#define DEBUG_LDPC
 
@@ -63,13 +69,23 @@
 #include "ldpc_BG2_Zc160_byte.c"
 #include "ldpc_BG2_Zc144_byte.c"
 #include "ldpc_BG2_Zc128_byte.c"
-#include "ldpc_BG2_Zc120_byte.c"
 #include "ldpc_BG2_Zc112_byte.c"
-#include "ldpc_BG2_Zc104_byte.c"
 #include "ldpc_BG2_Zc96_byte.c"
-#include "ldpc_BG2_Zc88_byte.c"
 #include "ldpc_BG2_Zc80_byte.c"
+
+#ifndef _WINDOWS
+#include "ldpc_BG2_Zc120_byte.c"
+#include "ldpc_BG2_Zc104_byte.c"
+#include "ldpc_BG2_Zc88_byte.c"
 #include "ldpc_BG2_Zc72_byte.c"
+#else
+#ifndef __x86_64__
+#include "ldpc_BG2_Zc120_byte.c"
+#include "ldpc_BG2_Zc104_byte.c"
+#include "ldpc_BG2_Zc88_byte.c"
+#include "ldpc_BG2_Zc72_byte.c"
+#endif
+#endif
 
 
 
@@ -168,13 +184,45 @@ void encode_parity_check_part_optim(uint8_t *c,uint8_t *d, short BG,short Zc,sho
     case 56: break;
     case 60: break;
     case 64: break;
-    case 72: ldpc_BG2_Zc72_byte(c,d); break;
-    case 80: ldpc_BG2_Zc80_byte(c,d); break;   
-    case 88: ldpc_BG2_Zc88_byte(c,d); break;   
+
+    case 72:
+#if defined(_WINDOWS) && defined(__x86_64__)
+        AssertFatal(0, "BG %d Zc %d is not supported yet\n", BG, Zc);
+#else
+        ldpc_BG2_Zc72_byte(c,d);
+#endif
+        break;
+
+    case 80: ldpc_BG2_Zc80_byte(c,d); break;
+
+    case 88:
+#if defined(_WINDOWS) && defined(__x86_64__)
+        AssertFatal(0, "BG %d Zc %d is not supported yet\n", BG, Zc);
+#else
+        ldpc_BG2_Zc88_byte(c,d);
+#endif
+        break;
+
     case 96: ldpc_BG2_Zc96_byte(c,d); break;
-    case 104: ldpc_BG2_Zc104_byte(c,d); break;
+
+    case 104:
+#if defined(_WINDOWS) && defined(__x86_64__)
+        AssertFatal(0, "BG %d Zc %d is not supported yet\n", BG, Zc);
+#else
+        ldpc_BG2_Zc104_byte(c,d);
+#endif
+        break;
+
     case 112: ldpc_BG2_Zc112_byte(c,d); break;
-    case 120: ldpc_BG2_Zc120_byte(c,d); break;
+
+    case 120:
+#if defined(_WINDOWS) && defined(__x86_64__)
+        AssertFatal(0, "BG %d Zc %d is not supported yet\n", BG, Zc);
+#else
+        ldpc_BG2_Zc120_byte(c,d);
+#endif
+        break;
+
     case 128: ldpc_BG2_Zc128_byte(c,d); break;
     case 144: ldpc_BG2_Zc144_byte(c,d); break;
     case 160: ldpc_BG2_Zc160_byte(c,d); break;
@@ -204,6 +252,7 @@ int ldpc_encoder_optim(unsigned char *test_input,unsigned char *channel_input,sh
   short Zc,Kb=0,nrows=0,ncols=0;
   int i,i1;
   int no_punctured_columns,removed_bit;
+  int result = 0;
 
   //Table of possible lifting sizes
   short lift_size[51]= {2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,18,20,22,24,26,28,30,32,36,40,44,48,52,56,60,64,72,80,88,96,104,112,120,128,144,160,176,192,208,224,240,256,288,320,352,384};
@@ -257,10 +306,22 @@ int ldpc_encoder_optim(unsigned char *test_input,unsigned char *channel_input,sh
   if ((Zc&31) > 0) simd_size = 16;
   else simd_size = 32;
 
+#ifndef _WINDOWS
   unsigned char c[22*Zc] __attribute__((aligned(32))); //padded input, unpacked, max size
   unsigned char d[46*Zc] __attribute__((aligned(32))); //coded parity part output, unpacked, max size
 
   unsigned char c_extension[2*22*Zc*simd_size] __attribute__((aligned(32)));      //double size matrix of c
+#else
+  unsigned char* c = _aligned_malloc(22 * Zc * sizeof(unsigned char), 32);
+  unsigned char* d = _aligned_malloc(46 * Zc * sizeof(unsigned char), 32);
+  unsigned char* c_extension = _aligned_malloc(2 * 22 * Zc * simd_size * sizeof(unsigned char), 32);
+
+  if (c == NULL || d == NULL || c_extension == NULL)
+  {
+      result = -2;
+      goto cleanup_and_return;
+  }
+#endif
 
   // calculate number of punctured bits
   no_punctured_columns=(int)((nrows-2)*Zc+block_length-block_length*3)/Zc;
@@ -305,7 +366,8 @@ int ldpc_encoder_optim(unsigned char *test_input,unsigned char *channel_input,sh
   else {
     if (encode_parity_check_part_orig(c, d, BG, Zc, Kb, block_length)!=0) {
       printf("Problem with encoder\n");
-      return(-1);
+      result = -1;
+      goto cleanup_and_return;
     }
   }
   if(toutput != NULL) start_meas(toutput);
@@ -314,7 +376,15 @@ int ldpc_encoder_optim(unsigned char *test_input,unsigned char *channel_input,sh
   memcpy(&channel_input[block_length-2*Zc], &d[0], ((nrows-no_punctured_columns) * Zc-removed_bit)*sizeof(unsigned char));
 
   if(toutput != NULL) stop_meas(toutput);
-  return 0;
+
+cleanup_and_return:
+#ifdef _WINDOWS
+  if (c != NULL) _aligned_free(c);
+  if (d != NULL) _aligned_free(d);
+  if (c_extension != NULL) _aligned_free(c_extension);
+#endif
+
+  return result;
 }
 
 int ldpc_encoder_optim_8seg(unsigned char **test_input,unsigned char **channel_input,short block_length,short BG,int n_segments,time_stats_t *tinput,time_stats_t *tprep,time_stats_t *tparity,time_stats_t *toutput)
@@ -327,6 +397,7 @@ int ldpc_encoder_optim_8seg(unsigned char **test_input,unsigned char **channel_i
   short lift_size[51]= {2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,18,20,22,24,26,28,30,32,36,40,44,48,52,56,60,64,72,80,88,96,104,112,120,128,144,160,176,192,208,224,240,256,288,320,352,384};
   char temp;
   int simd_size;
+  int result = 0;
 
 #ifdef __AVX2__
   __m256i shufmask = _mm256_set_epi64x(0x0303030303030303, 0x0202020202020202,0x0101010101010101, 0x0000000000000000);
@@ -394,10 +465,22 @@ int ldpc_encoder_optim_8seg(unsigned char **test_input,unsigned char **channel_i
   if ((Zc&31) > 0) simd_size = 16;
   else          simd_size = 32;
 
-  unsigned char c[22*Zc] __attribute__((aligned(32))); //padded input, unpacked, max size
-  unsigned char d[46*Zc] __attribute__((aligned(32))); //coded parity part output, unpacked, max size
+#ifndef _WINDOWS
+  unsigned char c[22 * Zc] __attribute__((aligned(32))); //padded input, unpacked, max size
+  unsigned char d[46 * Zc] __attribute__((aligned(32))); //coded parity part output, unpacked, max size
 
-  unsigned char c_extension[2*22*Zc*simd_size] __attribute__((aligned(32)));      //double size matrix of c
+  unsigned char c_extension[2 * 22 * Zc * simd_size] __attribute__((aligned(32)));      //double size matrix of c
+#else
+  unsigned char* c = _aligned_malloc(22 * Zc * sizeof(unsigned char), 32);
+  unsigned char* d = _aligned_malloc(46 * Zc * sizeof(unsigned char), 32);
+  unsigned char* c_extension = _aligned_malloc(2 * 22 * Zc * simd_size * sizeof(unsigned char), 32);
+
+  if (c == NULL || d == NULL || c_extension == NULL)
+  {
+      result = -2;
+      goto cleanup_and_return;
+  }
+#endif // !_WINDOWS
 
   // calculate number of punctured bits
   no_punctured_columns=(int)((nrows-2)*Zc+block_length-block_length*3)/Zc;
@@ -469,7 +552,8 @@ int ldpc_encoder_optim_8seg(unsigned char **test_input,unsigned char **channel_i
   else {
     if (encode_parity_check_part_orig(c, d, BG, Zc, Kb, block_length)!=0) {
       printf("Problem with encoder\n");
-      return(-1);
+      result = -1;
+      goto cleanup_and_return;
     }
   }
   if(toutput != NULL) start_meas(toutput);
@@ -514,7 +598,15 @@ int ldpc_encoder_optim_8seg(unsigned char **test_input,unsigned char **channel_i
 #endif
 
   if(toutput != NULL) stop_meas(toutput);
-  return 0;
+
+cleanup_and_return:
+#ifdef _WINDOWS
+  if (c != NULL) _aligned_free(c);
+  if (d != NULL) _aligned_free(d);
+  if (c_extension != NULL) _aligned_free(c_extension);
+#endif
+
+  return result;
 }
 
 int ldpc_encoder_optim_8seg_multi(unsigned char **test_input,unsigned char **channel_input,short block_length, short BG, int n_segments,unsigned int macro_num, time_stats_t *tinput,time_stats_t *tprep,time_stats_t *tparity,time_stats_t *toutput)
@@ -528,6 +620,7 @@ int ldpc_encoder_optim_8seg_multi(unsigned char **test_input,unsigned char **cha
   char temp;
   int simd_size;
   int macro_segment, macro_segment_end;
+  int result = 0;
 
 
   macro_segment = 8*macro_num;
@@ -599,10 +692,22 @@ int ldpc_encoder_optim_8seg_multi(unsigned char **test_input,unsigned char **cha
   if ((Zc&31) > 0) simd_size = 16;
   else          simd_size = 32;
 
+#ifndef _WINDOWS
   unsigned char c[22*Zc] __attribute__((aligned(32))); //padded input, unpacked, max size
   unsigned char d[46*Zc] __attribute__((aligned(32))); //coded parity part output, unpacked, max size
 
   unsigned char c_extension[2*22*Zc*simd_size] __attribute__((aligned(32)));      //double size matrix of c
+#else
+  unsigned char* c = _aligned_malloc(22 * Zc * sizeof(unsigned char), 32);
+  unsigned char* d = _aligned_malloc(46 * Zc * sizeof(unsigned char), 32);
+  unsigned char* c_extension = _aligned_malloc(2 * 22 * Zc * simd_size * sizeof(unsigned char), 32);
+
+  if (c == NULL || d == NULL || c_extension == NULL)
+  {
+      result = -2;
+      goto cleanup_and_return;
+  }
+#endif
 
   // calculate number of punctured bits
   no_punctured_columns=(int)((nrows-2)*Zc+block_length-block_length*3)/Zc;
@@ -677,7 +782,8 @@ int ldpc_encoder_optim_8seg_multi(unsigned char **test_input,unsigned char **cha
   else {
     if (encode_parity_check_part_orig(c, d, BG, Zc, Kb, block_length)!=0) {
       printf("Problem with encoder\n");
-      return(-1);
+      result = -1;
+      goto cleanup_and_return;
     }
   }
   if(toutput != NULL) start_meas(toutput);
@@ -727,6 +833,14 @@ int ldpc_encoder_optim_8seg_multi(unsigned char **test_input,unsigned char **cha
 #endif
 
   if(toutput != NULL) stop_meas(toutput);
-  return 0;
+
+cleanup_and_return:
+#ifdef _WINDOWS
+  if (c != NULL) _aligned_free(c);
+  if (d != NULL) _aligned_free(d);
+  if (c_extension != NULL) _aligned_free(c_extension);
+#endif
+
+  return result;
 }
 

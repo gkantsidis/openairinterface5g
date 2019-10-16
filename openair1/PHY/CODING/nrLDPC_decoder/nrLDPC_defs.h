@@ -192,10 +192,22 @@ static const uint16_t lut_startAddrBnGroupsLlr_BG2_R13[NR_LDPC_NUM_BN_GROUPS_BG2
 static const uint16_t lut_startAddrBnGroupsLlr_BG2_R23[NR_LDPC_NUM_BN_GROUPS_BG2_R23] = {0,  1152,  2304,  4224,  5376, 6144};
 
 /** Vector of 32 '1' in int8 for application with AVX2 */
+#ifndef _WINDOWS
 static const int8_t ones256_epi8[32] __attribute__ ((aligned(32))) = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
+#else
+static const int8_t __declspec(align(32)) ones256_epi8[32] = { 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 };
+#endif
 /** Vector of 32 '0' in int8 for application with AVX2 */
+#ifndef _WINDOWS
 static const int8_t zeros256_epi8[32] __attribute__ ((aligned(32))) = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+#else
+static const int8_t __declspec(align(32)) zeros256_epi8[32] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
+#endif
 /** Vector of 32 '127' in int8 for application with AVX2 */
+#ifndef _WINDOWS
 static const int8_t maxLLR256_epi8[32] __attribute__ ((aligned(32))) = {127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127};
+#else
+static const int8_t __declspec(align(32)) maxLLR256_epi8[32] = { 127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127 };
+#endif
 
 #endif

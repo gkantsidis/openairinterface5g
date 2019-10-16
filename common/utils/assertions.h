@@ -41,6 +41,7 @@ void output_log_mem(void);
     fflush(stderr);                             \
     exit(EXIT_FAILURE);                         \
 
+#ifndef _WINDOWS
 #define _Assert_(cOND, aCTION, fORMAT, aRGS...)             \
 do {                                                        \
     if (!(cOND)) {                                          \
@@ -54,6 +55,22 @@ do {                                                        \
 #define AssertFatal(cOND, fORMAT, aRGS...)          _Assert_(cOND, _Assert_Exit_, fORMAT, ##aRGS)
 
 #define AssertError(cOND, aCTION, fORMAT, aRGS...)  _Assert_(cOND, aCTION, fORMAT, ##aRGS)
+#else
+#define _Assert_(cOND, aCTION, fORMAT, ...)             \
+do {                                                        \
+    if (!(cOND)) {                                          \
+        fprintf(stderr, "\nAssertion ("#cOND") failed!\n"   \
+                "In %s() %s:%d\n" fORMAT,                   \
+                __FUNCTION__, __FILE__, __LINE__, __VA_ARGS__);  \
+        aCTION;                                             \
+    }						\
+} while(0)
+
+#define AssertFatal(cOND, fORMAT, ...)          _Assert_(cOND, _Assert_Exit_, fORMAT, __VA_ARGS__)
+
+#define AssertError(cOND, aCTION, fORMAT, ...)  _Assert_(cOND, aCTION, fORMAT, __VA_ARGS__)
+
+#endif
 
 
 

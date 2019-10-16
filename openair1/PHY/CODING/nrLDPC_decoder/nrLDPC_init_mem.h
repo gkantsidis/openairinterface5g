@@ -32,8 +32,18 @@
 #define __NR_LDPC_INIT_MEM__H__
 
 #include <stdlib.h>
+#include <memory.h>
 #include "nrLDPC_defs.h"
 #include "nrLDPC_types.h"
+
+#ifndef _WINDOWS
+#ifndef free32
+#define free32 free
+#endif
+#else
+#define memalign(alignment, size) _aligned_malloc(size, alignment)
+#define free32 _aligned_free
+#endif // !_WINDOWS
 
 #ifndef malloc32_clear
 /**
@@ -48,6 +58,7 @@ static inline void* malloc32_clear(size_t size)
     return ptr;
 }
 #endif
+
 
 /**
    \brief Allocates and initializes the internal decoder processing buffers
@@ -74,13 +85,13 @@ static inline t_nrLDPC_procBuf* nrLDPC_init_mem(void)
 
 static inline void nrLDPC_free_mem(t_nrLDPC_procBuf* p_procBuf)
 {
-    free(p_procBuf->cnProcBuf);
-    free(p_procBuf->cnProcBufRes);
-    free(p_procBuf->bnProcBuf);
-    free(p_procBuf->bnProcBufRes);
-    free(p_procBuf->llrRes);
-    free(p_procBuf->llrProcBuf);
+    free32(p_procBuf->cnProcBuf);
+    free32(p_procBuf->cnProcBufRes);
+    free32(p_procBuf->bnProcBuf);
+    free32(p_procBuf->bnProcBufRes);
+    free32(p_procBuf->llrRes);
+    free32(p_procBuf->llrProcBuf);
 
-    free(p_procBuf);
+    free32(p_procBuf);
 }
 #endif
