@@ -1,16 +1,20 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <malloc.h>
+#include <string.h>
 
 #ifdef _WINDOWS
 #include <intrin.h>
 #endif
 
-#include <nrLDPC_decoder.h>
+extern "C" {
+#include "nrLDPC_decoder.h"
 #include "nrLDPC_mPass.h"
+}
 
 #ifndef _WINDOWS
 #define MAKE_CIRCULAR_SHIFT(type, name, index, base) \
-    const type (*name) [index] = (type (*)) [index] base;
+    const type (*name) [index] = (type(*)[index]) base;
 #else
 template <typename T>
 struct VectorAccessor

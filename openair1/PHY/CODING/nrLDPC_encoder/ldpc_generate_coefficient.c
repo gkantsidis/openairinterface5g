@@ -463,7 +463,7 @@ int ldpc_encoder_orig(unsigned char *test_input,unsigned char *channel_input,sho
   else {
 	  AssertFatal(0,"BG %d is not supported yet\n",BG);
   }
-  
+
   no_punctured_columns=(int)((nrows-2)*Zc+block_length-block_length*3)/Zc;
   removed_bit=(nrows-no_punctured_columns-2) * Zc+block_length-(block_length*3);
   //printf("%d\n",no_punctured_columns);
@@ -519,7 +519,7 @@ int ldpc_encoder_orig(unsigned char *test_input,unsigned char *channel_input,sho
       shift=3; // MMX  - 64-bit SIMD
       mask=7;
       strcpy(data_type,"__m64");
-      strcpy(xor_command,"_mm_xor_si64"); 
+      strcpy(xor_command,"_mm_xor_si64");
     }
     else {
       shift=0;                 // no SIMD
@@ -544,9 +544,9 @@ int ldpc_encoder_orig(unsigned char *test_input,unsigned char *channel_input,sho
     for (i2=0; i2 < 1; i2++)
     {
       //t=Kb*Zc+i2;
-    
+
       // calculate each row in base graph
-     
+
 
       fprintf(fd,"     c2=&csimd[i2];\n");
       fprintf(fd,"     d2=&dsimd[i2];\n");
@@ -571,15 +571,15 @@ int ldpc_encoder_orig(unsigned char *test_input,unsigned char *channel_input,sho
 
 	  for (i4=0; i4 < no_shift_values[temp_prime]; i4++)
 	    {
-	          
+
 	      var=(int)((i3*Zc + (Gen_shift_values[ pointer_shift_values[temp_prime]+i4 ]+1)%Zc)/Zc);
 	      int index =var*2*Zc + (i3*Zc + (Gen_shift_values[ pointer_shift_values[temp_prime]+i4 ]+1)%Zc) % Zc;
-	      
+
 	      indlist[nind] = ((index&mask)*((2*Zc)>>shift)*Kb)+(index>>shift);
 	      indlist2[nind++] = ((index&(mask>>1))*((2*Zc)>>(shift-1))*Kb)+(index>>(shift-1));
-	      
+
 	    }
-	  
+
 
         }
 	for (i4=0;i4<nind-1;i4++) {
@@ -640,8 +640,10 @@ int ldpc_encoder_orig(unsigned char *test_input,unsigned char *channel_input,sho
   //memcpy(channel_input,c,Kb*Zc*sizeof(unsigned char));
 
 cleanup_and_return:
+#ifdef _WINDOWS
   if (c != NULL) free(c);
   if (d != NULL) free(d);
+#endif
 
   return result;
 }

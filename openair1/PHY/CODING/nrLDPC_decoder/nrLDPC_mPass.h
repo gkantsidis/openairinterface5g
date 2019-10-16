@@ -216,7 +216,6 @@ void nrLDPC_bn2cnProcBuf_BG1(t_nrLDPC_lut* p_lut, t_nrLDPC_procBuf* p_procBuf, u
    \param Z Lifting size
    \param BG Base graph
 */
-EXTERNC
 static inline void nrLDPC_llrRes2llrOut(t_nrLDPC_lut* p_lut, int8_t* llrOut, t_nrLDPC_procBuf* p_procBuf, uint16_t Z, uint8_t BG)
 {
     uint32_t i;

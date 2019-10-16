@@ -1167,6 +1167,7 @@ set(PHY_TURBOIF
   ${OPENAIR1_DIR}/PHY/CODING/coding_load.c
 )
 set(PHY_LDPCSRC
+  ${OPENAIR1_DIR}/PHY/CODING/nrLDPC_decoder/nrLDPC_mPass.cpp
   ${OPENAIR1_DIR}/PHY/CODING/nrLDPC_decoder/nrLDPC_decoder.c
   ${OPENAIR1_DIR}/PHY/CODING/nrLDPC_encoder/ldpc_encoder.c
   ${OPENAIR1_DIR}/PHY/CODING/nrLDPC_encoder/ldpc_encoder2.c

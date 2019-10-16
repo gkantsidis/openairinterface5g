@@ -480,11 +480,10 @@ ErrorStatistics test_ldpc (short No_iteration,
                 start_meas (&(times->time_decoder));
                 // decode the sequence
                 // decoder supports BG2, Z=128 & 256
-                n_iter = nrLDPC_decoder (&decParams, (int8_t *)
-                                         channel_output_fixed[j], (int8_t *)
-                                         estimated_output[j],
-                                         p_nrLDPC_procBuf,
-                                         p_decoder_profiler);
+                n_iter = nrLDPC_decoder (&decParams,
+                                         (int8_t *) channel_output_fixed[j],
+                                         (int8_t *) estimated_output[j],
+                                         p_nrLDPC_procBuf, p_decoder_profiler);
 
                 stop_meas (&(times->time_decoder));
             }
@@ -601,6 +600,7 @@ int main (int argc, char *argv[])
 
     TimeStatistics times;
     Channel channel_type = Binary_AWG;
+    int seed = 13;
 
     short Zc;
 
@@ -651,6 +651,10 @@ int main (int argc, char *argv[])
             channel_type = (Channel) atoi(optarg);
             break;
 
+        case 'g':
+            seed = atoi(optarg);
+            break;
+
         case 'h':
         default:
             printf ("CURRENTLY SUPPORTED CODE RATES: \n");
@@ -674,6 +678,8 @@ int main (int argc, char *argv[])
             break;
         }
     }
+
+    srand(seed);
 
     cpu_freq_GHz = get_cpu_freq_GHz ();
     //printf("the decoder supports BG2, Kb=10, Z=128 & 256\n");
