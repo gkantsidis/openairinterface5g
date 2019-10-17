@@ -9,10 +9,6 @@ extern "C"
 #include "nrLDPC_encoder/defs.h"
 #include <nrLDPC_decoder\nrLDPC_init_mem.h>
 #include <nrLDPC_decoder\nrLDPC_decoder.h>
-
-    void display_backtrace(void)
-    {
-    }
 }
 
 int opp_enabled = 0;
@@ -273,6 +269,7 @@ int main()
 
         for (int i = 0; i < block_length / 8; i++) {
             test_input[j][i] = (unsigned char)rand();
+            // test_input[j][i] = (unsigned char)1;
         }
 
         ldpc_encoder_orig(test_input[j], channel_input[j],

@@ -89,5 +89,8 @@
     <ClCompile Include="..\..\..\openair1\PHY\CODING\nrLDPC_decoder\nrLDPC_mPass.cpp">
       <Filter>Source Files\Decoder</Filter>
     </ClCompile>
+    <ClCompile Include="tracer.c">
+      <Filter>Source Files\Encoder</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
