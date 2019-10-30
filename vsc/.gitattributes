@@ -1,0 +1,8 @@
+*.sln     -text diff
+*.suo     -text diff
+*.vcxproj -text diff
+*.gif     -text diff
+*.gz      -text diff
+*.ico     -text diff
+*.jpeg    -text diff 
+*.bin     -text diff

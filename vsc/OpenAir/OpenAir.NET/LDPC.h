@@ -491,6 +491,8 @@ namespace OpenAir::LDPC {
             System::Console::WriteLine("Using {0} and {1}", (int)params.R, (int)params.outMode);
 
             std::unique_ptr<int8_t[]> temp(new int8_t[output_length_in_bits]);
+            memset(temp.get(), 0x00, output_length_in_bits);
+
             pin_ptr<int8_t> pinned_data = &(data[0]);
             int iterations = nrLDPC_decoder(&params, pinned_data, temp.get(), _p_nrLDPC_procBuf, _profiler);
             System::Console::WriteLine("0   = {0} and {1}", data[0], temp[0]);

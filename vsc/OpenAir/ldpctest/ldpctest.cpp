@@ -13,8 +13,6 @@ extern "C"
 
 int opp_enabled = 0;
 
-#define MAX_NUM_DLSCH_SEGMENTS 16
-
 typedef struct _configuration {
     short BG;
     short Kb;
@@ -85,7 +83,7 @@ char quantize(double D, double x, unsigned char B)
     if (qxd <= -maxlev)
         qxd = -maxlev;
     else if (qxd >= maxlev)
-        qxd = maxlev - 1;
+        qxd = (long long)maxlev - 1;
 
     return ((char)qxd);
 }
@@ -199,6 +197,33 @@ int find_R_ind(int nom_rate, int denom_rate, short BG)
 
 #define malloc16(x) memalign(32, x)
 
+void initialize_random(unsigned char* input, const int block_length, unsigned int seed)
+{
+    srand(seed);
+    for (int i = 0; i < block_length / 8; i++) {
+        input[i] = (unsigned char)rand();
+    }
+}
+
+void initialize_constant(unsigned char* input, const int block_length, unsigned char value)
+{
+    for (int i = 0; i < block_length / 8; i++) {
+        input[i] = value;
+    }
+}
+
+void initialize_pattern(unsigned char* input, const int block_length, unsigned char periodicity)
+{
+    unsigned char value = 0;
+    for (int i = 0; i < block_length / 8; i++, value++) {
+        if (value >= periodicity)
+        {
+            value = 0;
+        }
+        input[i] = value;
+    }
+}
+
 int main()
 {
     int n_segments = 1;
@@ -225,18 +250,17 @@ int main()
     reset_meas(&decoder_profiler.llrRes2llrOut);
     reset_meas(&decoder_profiler.llr2bit);
 
-    unsigned char* test_input[MAX_NUM_DLSCH_SEGMENTS] =
-    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-    unsigned char* channel_input[MAX_NUM_DLSCH_SEGMENTS];
-    char* channel_output_fixed[MAX_NUM_DLSCH_SEGMENTS];
-    unsigned char* estimated_output[MAX_NUM_DLSCH_SEGMENTS];
+    unsigned char* test_input = NULL;
+    unsigned char* channel_input = NULL;
+    char* channel_output_fixed = NULL;
+    unsigned char* estimated_output = NULL;
 
     Configuration configuration = find_configuration(block_length);
     int R_ind = find_R_ind(nom_rate, denom_rate, configuration.BG);
 
     ErrorStatistics errors = { 0, 0, 0, 0 };
 
-    srand(13);
+    srand(14);
 
     short Zc = find_Zc(block_length, configuration.Kb);
 
@@ -257,60 +281,64 @@ int main()
         block_length -
         (int)(block_length / ((float)nom_rate / (float)denom_rate));
 
-    for (int j = 0; j < MAX_NUM_DLSCH_SEGMENTS; j++) {
-        test_input[j] = (unsigned char*)malloc16(sizeof(unsigned char) * block_length / 8);
-        channel_input[j] = (unsigned char*)malloc16(sizeof(unsigned char) * 68 * 384);
-        channel_output_fixed[j] = (char*)malloc16(sizeof(char) * 68 * 384);
-        estimated_output[j] = (unsigned char*)malloc16(sizeof(unsigned char) * block_length);
+    test_input = (unsigned char*)malloc16(sizeof(unsigned char) * block_length / 8);
+    channel_input = (unsigned char*)malloc16(sizeof(unsigned char) * 68 * 384);
+    channel_output_fixed = (char*)malloc16(sizeof(char) * 68 * 384);
+    estimated_output = (unsigned char*)malloc16(sizeof(unsigned char) * block_length);
 
-        assert(test_input[j] != NULL);
-        assert(channel_output_fixed[j] != NULL);
-        assert(estimated_output[j] != NULL);
+    assert(test_input != NULL);
+    assert(channel_input != NULL);
+    assert(channel_output_fixed != NULL);
+    assert(estimated_output != NULL);
 
-        for (int i = 0; i < block_length / 8; i++) {
-            test_input[j][i] = (unsigned char)rand();
-            // test_input[j][i] = (unsigned char)1;
-        }
+    for (size_t attempts = 0; attempts < 1; attempts++)
+    {
+        //initialize_random(test_input, block_length, attempts);
+        initialize_constant(test_input, block_length, 0);
+        //initialize_constant(test_input, block_length, 5);
+        //initialize_pattern(test_input, block_length, 2);
 
-        ldpc_encoder_orig(test_input[j], channel_input[j],
+        memset(channel_input, 0x00, sizeof(unsigned char) * 68 * 384);
+        memset(channel_output_fixed, 0x00, sizeof(char) * 68 * 384);
+
+        ldpc_encoder_orig(test_input, channel_input,
             block_length, configuration.BG, 0);
-    }
 
-    for (int j = 0; j < n_segments; j++) {
         int last_bit_pos =
-            (configuration.Kb + configuration.nrows - no_punctured_columns) * Zc - removed_bit;
+            (configuration.Kb + configuration.nrows - no_punctured_columns) * decParams.Z - removed_bit;
 
         int uncoded_errors = apply_channel(
             Ideal, NULL,
-            channel_input[j], 0, last_bit_pos - 2 * Zc,
-            channel_output_fixed[j], 2 * Zc, last_bit_pos
+            channel_input, 0, last_bit_pos - 2 * decParams.Z,
+            channel_output_fixed, 2 * decParams.Z, last_bit_pos
         );
 
         errors.errors_bit_uncoded += uncoded_errors;
 
         int n_iter = nrLDPC_decoder(
             &decParams,
-            (int8_t*) channel_output_fixed[j],
-            (int8_t*) estimated_output[j],
+            (int8_t*)channel_output_fixed,
+            (int8_t*)estimated_output,
             p_nrLDPC_procBuf, p_decoder_profiler);
-    }
 
-    int segment_bler = 0;
-    for (int j = 0; j < n_segments; j++) {
+        bool has_segment_error = false;
         for (int i = 0; i < (block_length >> 3); i++) {
-            if (estimated_output[j][i] != test_input[j][i]) {
-                segment_bler++;
-                break;
+            if (estimated_output[i] != test_input[i]) {
+                auto diff = estimated_output[i] ^ test_input[i];
+                while (diff != 0) {
+                    diff = diff & (diff - 1);
+                    errors.errors_bit++;
+                }
+                has_segment_error = true;
             }
         }
+        if (has_segment_error) errors.errors++;
     }
 
-    for (int j = 0; j < MAX_NUM_DLSCH_SEGMENTS; j++) {
-        _aligned_free(test_input[j]);
-        _aligned_free(channel_input[j]);
-        _aligned_free(channel_output_fixed[j]);
-        _aligned_free(estimated_output[j]);
-    }
+    _aligned_free(test_input);
+    _aligned_free(channel_input);
+    _aligned_free(channel_output_fixed);
+    _aligned_free(estimated_output);
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
