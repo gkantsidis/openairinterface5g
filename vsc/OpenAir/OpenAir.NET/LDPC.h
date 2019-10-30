@@ -420,7 +420,7 @@ namespace OpenAir::LDPC {
             pin_ptr<System::Byte> pinned_data = &(data[0]);
             pin_ptr<System::Byte> pinned_result = &(result[0]);
 
-            auto error = ldpc_encoder_orig(pinned_data, pinned_result, data->Length, configuration->BGShort, 0);
+            auto error = ldpc_encoder_orig(pinned_data, pinned_result, data->Length * 8, configuration->BGShort, 0);
             if (error != 0)
             {
                 throw gcnew LdpcException("Encoder encountered error");
@@ -488,18 +488,11 @@ namespace OpenAir::LDPC {
             params.numMaxIter = maximum_iterations;
             params.outMode = nrLDPC_outMode_BIT;
 
-            System::Console::WriteLine("Using {0} and {1}", (int)params.R, (int)params.outMode);
-
             std::unique_ptr<int8_t[]> temp(new int8_t[output_length_in_bits]);
             memset(temp.get(), 0x00, output_length_in_bits);
 
             pin_ptr<int8_t> pinned_data = &(data[0]);
             int iterations = nrLDPC_decoder(&params, pinned_data, temp.get(), _p_nrLDPC_procBuf, _profiler);
-            System::Console::WriteLine("0   = {0} and {1}", data[0], temp[0]);
-            System::Console::WriteLine("96  = {0} and {1}", data[96], temp[96]);
-            System::Console::WriteLine("97  = {0} and {1}", data[97], temp[97]);
-            System::Console::WriteLine("768 = {0} and {1}", data[768], temp[768]);
-            System::Console::WriteLine("769 = {0} and {1}", data[769], temp[769]);
 
             auto result = gcnew array<System::Byte>(output_length_in_bits / 8);
             for (size_t i = 0; i < output_length_in_bits/8; i++)
