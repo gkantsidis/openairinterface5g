@@ -30,8 +30,8 @@ let ideal_channel (input : System.Collections.Generic.IReadOnlyList<byte>, outpu
          let level = if input.[i] = 0uy then maxlev - 1 else -maxlev
          output.[i] <- sbyte(level)
 
-let data = mk_random_data 13 (8448/8)
-//let data = mk_const_data 2uy (8448/8)
+// let data = mk_random_data 13 (8448/8)
+let data = mk_const_data 1uy (8448/8)
 let configuration = OpenAir.LDPC.Configuration.MkFromBlockLength(data.Length * 8)
 configuration.Kb
 configuration.Rows
@@ -42,20 +42,20 @@ let channel_out = OpenAir.LDPC.SimpleEncoder.GetChannelOutputBuffer()
 //Array.set_all 0x7Fy channel_out
 
 let channel_out_slice = configuration.SliceOutputFromChannel(channel_out, data.Length)
-channel_out_slice.Offset + channel_out_slice.Count
-configuration.LastBitPosition(data.Length)
-
 
 ideal_channel (channel_slice, channel_out_slice)
 
 let result = decoder.Decode(channel_out, configuration, 5, data.Length * 8)
 
-List.init 200 id
-|> List.filter (fun i -> data.[i] = result.[96-12+i])
-|> List.iter (printfn "%A")
+let step = 16
+channel_in.Length
+channel_in
+|> Array.iteri (
+    fun i v ->
+        if i = 0 then printf "%08X    " i
+        if i > 0 && i % step = 0 then printfn ""; printf "%08X    " i
+        if i > 0 && i % 2 = 0 && i % step <> 0 then printf " "
+        printf "%02X" v
+)
 
-data.[0]
-result |> Array.tryFindIndex (fun v -> v = data.[14])
-
-result.[215]
 
