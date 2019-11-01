@@ -11,6 +11,42 @@ namespace OpenAir.NET.Tests
     public class Decoder
     {
         [Fact]
+        public void DecodeAllAzero()
+        {
+            var levels = 8;
+            var maximum_iterations = 5;
+
+            var size_in_bytes = 1056;
+            var nominator = 1;
+            var denominator = 3;
+
+            var size_in_bits = size_in_bytes * 8;
+            var data = Sources.Constant.Zero(size_in_bytes);
+
+            var configuration = Configuration.MkFromBlockLength(size_in_bits, nominator, denominator);
+
+            var encoder = new SimpleEncoder();
+            var decoder = new OpenAir.LDPC.Decoder();
+
+            var channel_in = encoder.Encode(data, configuration);
+            var channel_in_slice = configuration.SliceInputToChannel(channel_in, data.Length);
+            var channel_out = SimpleEncoder.GetChannelOutputBuffer();
+            var channel_out_slice = configuration.SliceOutputFromChannel(channel_out, data.Length);
+
+            Quantizer.Binary.Map.Apply(levels, channel_in_slice, channel_out_slice);
+            var result = decoder.Decode(channel_out, configuration, maximum_iterations, size_in_bits);
+
+            Assert.Equal(data.Length, result.Length);
+            for (int i = 0; i < data.Length; i++)
+            {
+                Assert.True(
+                    data[i] == result[i],
+                    string.Format("Data differ in position {0}; expected {1} got {2}",
+                    i, data[i], result[i]));
+            }
+        }
+
+        [Fact]
         public void Block128Test()
         {
             var levels = 8;

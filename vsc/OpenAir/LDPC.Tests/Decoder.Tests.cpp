@@ -32,7 +32,18 @@ namespace LDPCTests
 
         TEST_METHOD(TestDecodeAllZero)
         {
-            // TODO: Write Test
+            auto size = 68 * 384;
+
+            std::unique_ptr<t_nrLDPC_time_stats> profiler(new t_nrLDPC_time_stats());
+            std::unique_ptr<char> encoding(new char[size]);
+            memset(encoding.get(), 0x00, size);
+
+            t_nrLDPC_dec_params params;
+
+            auto _p_nrLDPC_procBuf = nrLDPC_init_mem();
+
+
+            nrLDPC_free_mem(_p_nrLDPC_procBuf);
         }
 
         TEST_METHOD(TestEncodeAndDecode)
