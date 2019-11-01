@@ -54,6 +54,10 @@
 static inline void* malloc32_clear(size_t size)
 {
     void* ptr = (void*) memalign(32, size+32);
+    if (ptr == NULL)
+    {
+        return nullptr;
+    }
     memset(ptr, 0, size);
     return ptr;
 }

@@ -17,6 +17,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LDPC.Tests", "LDPC.Tests\LD
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenAir.NET.Tests", "OpenAir.NET.Tests\OpenAir.NET.Tests.csproj", "{11DACD01-17DD-487D-9659-99C995B1A9C0}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "CodingBench", "CodingBench\CodingBench.fsproj", "{C0DC9B26-95AF-4F47-A262-952A15802138}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -91,6 +93,18 @@ Global
 		{11DACD01-17DD-487D-9659-99C995B1A9C0}.Release|x64.Build.0 = Release|Any CPU
 		{11DACD01-17DD-487D-9659-99C995B1A9C0}.Release|x86.ActiveCfg = Release|Any CPU
 		{11DACD01-17DD-487D-9659-99C995B1A9C0}.Release|x86.Build.0 = Release|Any CPU
+		{C0DC9B26-95AF-4F47-A262-952A15802138}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0DC9B26-95AF-4F47-A262-952A15802138}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0DC9B26-95AF-4F47-A262-952A15802138}.Debug|x64.ActiveCfg = Debug|x64
+		{C0DC9B26-95AF-4F47-A262-952A15802138}.Debug|x64.Build.0 = Debug|x64
+		{C0DC9B26-95AF-4F47-A262-952A15802138}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C0DC9B26-95AF-4F47-A262-952A15802138}.Debug|x86.Build.0 = Debug|Any CPU
+		{C0DC9B26-95AF-4F47-A262-952A15802138}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0DC9B26-95AF-4F47-A262-952A15802138}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0DC9B26-95AF-4F47-A262-952A15802138}.Release|x64.ActiveCfg = Release|Any CPU
+		{C0DC9B26-95AF-4F47-A262-952A15802138}.Release|x64.Build.0 = Release|Any CPU
+		{C0DC9B26-95AF-4F47-A262-952A15802138}.Release|x86.ActiveCfg = Release|Any CPU
+		{C0DC9B26-95AF-4F47-A262-952A15802138}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

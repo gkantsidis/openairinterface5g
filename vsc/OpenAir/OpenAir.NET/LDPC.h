@@ -465,7 +465,7 @@ namespace OpenAir::LDPC {
             _profiler = nullptr;
         }
 
-        array<System::Byte>^ Decode(array<System::SByte>^ data, Configuration configuration, int maximum_iterations, int output_length_in_bits)
+        array<System::Byte>^ Decode(array<System::SByte>^ data, Configuration^ configuration, int maximum_iterations, int output_length_in_bits)
         {
             if (Object::ReferenceEquals(nullptr, data))
             {
@@ -482,9 +482,9 @@ namespace OpenAir::LDPC {
             Contract::EndContractBlock();
 
             t_nrLDPC_dec_params params;
-            params.BG = (uint8_t)configuration.BG;
-            params.Z = configuration.ZcShort;
-            params.R = _code_rate_vec[configuration.R_ind()];
+            params.BG = (uint8_t)configuration->BG;
+            params.Z = configuration->ZcShort;
+            params.R = _code_rate_vec[configuration->R_ind()];
             params.numMaxIter = maximum_iterations;
             params.outMode = nrLDPC_outMode_BIT;
 

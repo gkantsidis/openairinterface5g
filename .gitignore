@@ -7,3 +7,5 @@ cmake_targets/*/build/
 log/
 lte_build_oai/
 targets/bin/
+
+.ionide/

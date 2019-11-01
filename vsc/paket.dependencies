@@ -1,4 +1,6 @@
 source https://www.nuget.org/api/v2
+nuget MathNet.Numerics
+nuget NLOG
 nuget xunit
 nuget xunit.runner.console
 nuget xunit.runner.visualstudio
