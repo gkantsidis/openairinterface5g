@@ -69,6 +69,9 @@
     <ClInclude Include="..\..\..\openair1\PHY\TOOLS\time_meas.h">
       <Filter>Header Files\openair1\PHY\TOOLS</Filter>
     </ClInclude>
+    <ClInclude Include="Configuration.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">

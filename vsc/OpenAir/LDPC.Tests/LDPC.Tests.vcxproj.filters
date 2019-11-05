@@ -30,6 +30,9 @@
     <ClCompile Include="utilities.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Configuration.Tests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -40,11 +43,13 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Encodings\encoder_default_8448_all_ones.bin">
-      <Filter>Results</Filter>
-    </None>
     <None Include="Encodings\encoder_default_8448_all_zero.bin">
       <Filter>Results</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="Encodings\encoder_default_8448_all_ones.bin">
+      <Filter>Resource Files</Filter>
+    </CopyFileToFolders>
   </ItemGroup>
 </Project>

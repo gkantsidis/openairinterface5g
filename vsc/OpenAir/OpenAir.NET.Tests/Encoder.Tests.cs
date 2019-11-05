@@ -12,14 +12,14 @@ namespace OpenAir.NET.Tests
         [Fact]
         public void AllZeroTest()
         {
-            var size_in_bits = 8448;
-            byte[] data = new byte[size_in_bits / 8];
+            var length = 8448 / 8;
+            byte[] data = new byte[length];
             for (int i = 0; i < data.Length; i++)
             {
                 data[i] = 0;
             }
 
-            var configuration = Configuration.MkFromBlockLength(data.Length * 8);
+            var configuration = Configuration.MkFromBlockLength(data.Length);
             var encoder = new SimpleEncoder();
             var channel_in = encoder.Encode(data, configuration);
 
@@ -32,14 +32,14 @@ namespace OpenAir.NET.Tests
         [Fact]
         public void AllOnesTest()
         {
-            var size_in_bits = 8448;
-            byte[] data = new byte[size_in_bits / 8];
+            var length = 8448 / 8;
+            byte[] data = new byte[length];
             for (int i = 0; i < data.Length; i++)
             {
                 data[i] = 1;
             }
 
-            var configuration = Configuration.MkFromBlockLength(data.Length * 8);
+            var configuration = Configuration.MkFromBlockLength(data.Length);
             var encoder = new SimpleEncoder();
             var channel_in = encoder.Encode(data, configuration);
 

@@ -40,8 +40,8 @@ namespace LDPCTests
         TEST_METHOD(TestEncodeAllOnes)
         {
             short BG = 1;
-            short block_length = 8448;
-            auto test_input = (unsigned char*)malloc16(sizeof(unsigned char) * block_length / 8);
+            short block_length = 1056;
+            auto test_input = (unsigned char*)malloc16(sizeof(unsigned char) * block_length);
             auto channel_input = (unsigned char*)malloc16(sizeof(unsigned char) * 68 * 384);
 
             Assert::IsNotNull(test_input);
@@ -56,14 +56,14 @@ namespace LDPCTests
 
             memset(channel_input, 0x00, sizeof(unsigned char) * 68 * 384);
 
-            for (size_t i = 0; i < block_length / 8; i++)
+            for (size_t i = 0; i < block_length; i++)
             {
                 test_input[i] = 1;
             }
 
             std::string reference = "encoder_default_8448_all_ones.bin";
             std::unique_ptr<char> encoding = read_binary_file(reference, 68 * 384);
-            ldpc_encoder_orig(test_input, channel_input, block_length, BG, 0);
+            ldpc_encoder_orig(test_input, channel_input, block_length * 8, BG, 0);
 
             unsigned char* ground = (unsigned char*)encoding.get();
             auto difference = find_first_difference(ground, channel_input, 68 * 384);
@@ -73,8 +73,8 @@ namespace LDPCTests
         TEST_METHOD(TestEncodeAllZeros)
         {
             short BG = 1;
-            short block_length = 8448;
-            auto test_input = (unsigned char*)malloc16(sizeof(unsigned char) * block_length / 8);
+            short block_length = 1056;
+            auto test_input = (unsigned char*)malloc16(sizeof(unsigned char) * block_length);
             auto channel_input = (unsigned char*)malloc16(sizeof(unsigned char) * 68 * 384);
 
             Assert::IsNotNull(test_input);
@@ -89,12 +89,12 @@ namespace LDPCTests
 
             memset(channel_input, 0x00, sizeof(unsigned char) * 68 * 384);
 
-            for (size_t i = 0; i < block_length / 8; i++)
+            for (size_t i = 0; i < block_length; i++)
             {
                 test_input[i] = 0;
             }
 
-            ldpc_encoder_orig(test_input, channel_input, block_length, BG, 0);
+            ldpc_encoder_orig(test_input, channel_input, block_length * 8, BG, 0);
 
             for (size_t i = 0; i < 68 * 384; i++)
             {

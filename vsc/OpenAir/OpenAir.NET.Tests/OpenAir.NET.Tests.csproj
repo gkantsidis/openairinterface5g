@@ -63,6 +63,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Configuration.Tests.cs" />
     <Compile Include="Decoder.Tests.cs" />
     <Compile Include="Encoder.Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

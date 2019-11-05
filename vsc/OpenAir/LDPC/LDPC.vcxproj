@@ -169,6 +169,7 @@
     <ClInclude Include="..\..\..\openair1\PHY\CODING\nrLDPC_decoder\nrLDPC_mPass.h" />
     <ClInclude Include="..\..\..\openair1\PHY\CODING\nrLDPC_decoder\nrLDPC_types.h" />
     <ClInclude Include="..\..\..\openair1\PHY\TOOLS\time_meas.h" />
+    <ClInclude Include="Configuration.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
