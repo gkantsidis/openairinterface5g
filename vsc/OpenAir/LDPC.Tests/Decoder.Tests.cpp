@@ -242,9 +242,8 @@ namespace LDPCTests
             }
         }
 
-        TEST_METHOD(TestEncodeAndDecodeSmall)
+        TEST_METHOD(TestEncodeAndDecodeSmallAllOnes)
         {
-            auto seed = 18;
             auto size = 68 * 384;
             auto length = 64;
             auto bit_length = 8 * length;
@@ -252,7 +251,7 @@ namespace LDPCTests
             auto configuration = Configuration::MakeFromBlockLength(length, 1, 3);
 
             std::unique_ptr<unsigned char[]> test_input = std::make_unique<unsigned char[]>(length);
-            std::unique_ptr<unsigned char[]> channel_input = std::make_unique<unsigned char[]>(size);
+            std::unique_ptr<int8_t[]> channel_input = std::make_unique<int8_t[]>(size);
 
             Assert::IsNotNull(test_input.get());
             Assert::IsNotNull(channel_input.get());
@@ -264,18 +263,18 @@ namespace LDPCTests
                 return;
             }
 
-            srand(seed);
             for (size_t i = 0; i < length; i++)
             {
-                test_input[i] = rand() & 0xFF;
+                test_input[i] = 0xFF;
             }
 
             memset(channel_input.get(), 0x00, sizeof(unsigned char) * size);
-            ldpc_encoder_orig(test_input.get(), channel_input.get(), length * 8, configuration.BG(), 0);
+            ldpc_encoder_orig(test_input.get(), (unsigned char*)channel_input.get(), length * 8, configuration.BG(), 0);
 
             for (size_t i = configuration.InputChannelStart(); i < configuration.InputChannelEnd(length); i++)
             {
-                channel_input[i] = (channel_input[i] == 0) ? 0x7F : -0x80;
+                Assert::IsTrue(channel_input[i] == 0 || channel_input[i] == 1);
+                channel_input[i] = (channel_input[i] == 0) ? INT8_MAX : INT8_MIN;
             }
 
             std::unique_ptr<int8_t[]> channel_output = std::make_unique<int8_t[]>(size);

@@ -340,10 +340,14 @@ inline int8_t * ideal_channel_transfer(
     int block_length
     )
 {
-    auto input_channel_start = configuration->InputChannelStart();
-    auto input_channel_size = configuration->InputChannelCount(block_length);
-    auto output_channel_start = configuration->OutputChannelStart();
-    auto output_channel_size = configuration->OutputChannelCount(block_length);
+    //auto input_channel_start = configuration->InputChannelStart();
+    //auto input_channel_size = configuration->InputChannelCount(block_length);
+    //auto output_channel_start = configuration->OutputChannelStart();
+    //auto output_channel_size = configuration->OutputChannelCount(block_length);
+    auto input_channel_start = 0;
+    auto input_channel_size = 68 * 384 - 2 * configuration->Zc();
+    auto output_channel_start = 2 * configuration->Zc();
+    auto output_channel_size = 68 * 384 - 2 * configuration->Zc();
     assert(input_channel_size == output_channel_size);
 
     const int8_t* channel_input = &(input[input_channel_start]);

@@ -13,10 +13,10 @@ namespace LDPCTests
 
         TEST_METHOD(TestSizeOfOutputChannelForFullInput)
         {
-            auto output_length_in_bits = 8448;
-            auto configuration = Configuration::MakeFromBlockLength(output_length_in_bits, 1, 3);
+            auto output_length = 1056;
+            auto configuration = Configuration::MakeFromBlockLength(output_length, 1, 3);
 
-            Assert::AreEqual(10560, configuration.OutputChannelCount(output_length_in_bits));
+            Assert::AreEqual(25344, configuration.OutputChannelCount(output_length));
         }
     };
 }
