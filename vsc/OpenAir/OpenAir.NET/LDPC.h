@@ -576,6 +576,23 @@ namespace OpenAir::LDPC {
         }
     };
 
+    public value struct EncoderOutput
+    {
+    public:
+        array<System::Byte>^ Buffer;
+        int Start;
+        int Count;
+        int Length;
+
+        property int Stop
+        {
+            int get()
+            {
+                return Start + Count;
+            }
+        }
+    };
+
     /// <summary>   A simple encoder, which uses the basic implementation of LDPC from OpenAir. </summary>
     public ref class SimpleEncoder
     {
@@ -646,6 +663,48 @@ namespace OpenAir::LDPC {
             }
 
             return result;
+        }
+
+        /// <summary>   Encodes the input data and returns all encoder output. </summary>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when one or more required arguments are null.
+        /// </exception>
+        /// <exception cref="LdpcException">
+        /// Thrown when an error condition occurs.
+        /// </exception>
+        /// <param name="data">             The input data to encode. </param>
+        /// <param name="configuration">    The configuration to use for encoding. </param>
+        /// <returns>   Nullptr if it fails, else the encoded data. </returns>
+        EncoderOutput EncodeFull(array<System::Byte>^ data, Configuration^ configuration)
+        {
+            if (Object::ReferenceEquals(nullptr, data))
+            {
+                throw gcnew ArgumentNullException("data");
+            }
+            if (Object::ReferenceEquals(nullptr, configuration))
+            {
+                throw gcnew ArgumentNullException("configuration");
+            }
+            Contract::EndContractBlock();
+            // Contract::Ensures(!Object::ReferenceEquals(Contract::Result<array<System::Byte>^>(), nullptr));
+
+            auto result = gcnew array<System::Byte>(ENCODER_CHANNEL_SIZE);
+            pin_ptr<System::Byte> pinned_data = &(data[0]);
+            pin_ptr<System::Byte> pinned_result = &(result[0]);
+
+            auto error = ldpc_encoder_orig_full(pinned_data, pinned_result, data->Length * 8, configuration->BGShort);
+            if (error.Count < 0 || error.Start < 0)
+            {
+                throw gcnew LdpcException("Encoder encountered error");
+            }
+
+            EncoderOutput output;
+            output.Buffer = result;
+            output.Start = error.Start;
+            output.Count = error.Count;
+            output.Length = error.Length;
+
+            return output;
         }
 
     private:

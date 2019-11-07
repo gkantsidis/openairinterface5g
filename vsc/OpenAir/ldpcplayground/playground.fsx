@@ -35,11 +35,20 @@ let ideal_channel_binary (qbits : int) (input : System.Collections.Generic.IRead
          let level = if input.[i] = 0uy then maxlev - 1 else -maxlev
          output.[i] <- sbyte(level)
 
-let length = 8448 / 8
+let length = OpenAir.LDPC.Configuration.MAX_BLOCK_LENGTH
 let data = mk_random_data 13 length
 // let data = mk_const_data 1uy length
 // let configuration = OpenAir.LDPC.Configuration.MkFromBlockLength(data.Length * 8)
 let configuration = OpenAir.LDPC.Configuration.MkFromBlockLength(data.Length, 1, 3)
+
+let channel = encoder.EncodeFull(data, configuration)
+
+
+
+let inline mk_linear_snr snr = Math.Pow(10.0, snr / 10.0)
+
+
+
 
 let channel_in = encoder.Encode(data, configuration)
 let channel_slice = configuration.SliceInputToChannel(channel_in, data.Length)
@@ -54,7 +63,7 @@ let result = decoder.Decode(channel_out, configuration, 5, data.Length)
 let inline eq x y = x = y
 Array.forall2 eq data result
 
-let inline mk_linear_snr snr = Math.Pow(10.0, snr / 10.0)
+
 mk_linear_snr 6.0
 
 open MathNet.Numerics.Distributions

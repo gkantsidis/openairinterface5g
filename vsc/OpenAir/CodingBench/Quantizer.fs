@@ -65,12 +65,15 @@ module Quantizer =
         type Map =
             static member Mk (input : bool list) = input |> List.map (from_bool >> map)
             static member Mk (input : bool seq) = input |> Seq.map (from_bool >> map)
+            static member Mk (input : bool []) = input |> Array.map (from_bool >> map)
             static member Mk (input : IReadOnlyList<bool>) : IList<float> =
                 let result = List.init input.Count (fun i -> input.Item i |> from_bool |> map)
                 List(result) :> IList<float>
 
             static member Mk (input : int list) = input |> List.map map
             static member Mk (input : int seq) = input |> Seq.map map
+            static member Mk (input : int []) = input |> Array.map map
+            static member Mk (input : byte []) = input |> Array.map (int >> map)
 
             static member Mk (levels : int, input : bool list) =
                 if levels <= 0 then
@@ -109,6 +112,20 @@ module Quantizer =
                     raise (invalidArg "levels" "Levers should be positive")
                 Contract.EndContractBlock()
                 input |> Seq.map (map_q levels)
+
+            static member Mk (levels : int, input : int []) =
+                if levels <= 0 then
+                    error "Levels should be positive, it is %d; aborting operation" levels
+                    raise (invalidArg "levels" "Levers should be positive")
+                Contract.EndContractBlock()
+                input |> Array.map (map_q levels)
+
+            static member Mk (levels : int, input : byte []) =
+                if levels <= 0 then
+                    error "Levels should be positive, it is %d; aborting operation" levels
+                    raise (invalidArg "levels" "Levers should be positive")
+                Contract.EndContractBlock()
+                input |> Array.map (int >> map_q levels)
 
             static member Apply (input : IReadOnlyList<byte>, output : IList<sbyte>) =
                 if isNull input then

@@ -47,6 +47,19 @@ extern "C" {
     /*ldpc_generate_coefficient.c*/
     int ldpc_encoder_orig(unsigned char* test_input, unsigned char* channel_input, short block_length, short BG, unsigned char gen_code);
 
+#ifdef _WINDOWS
+
+    static const int ENCODER_CHANNEL_SIZE = 68 * 384;
+    typedef struct _EncoderInfo
+    {
+        int Start;
+        int Count;
+        int Length;
+    } EncoderInfo;
+
+    EncoderInfo ldpc_encoder_orig_full(unsigned char* test_input, unsigned char* channel_input, short block_length, short BG);
+#endif
+
     /*
     int encode_parity_check_part(unsigned char *c,unsigned char *d, short BG,short Zc,short Kb);
     int encode_parity_check_part_orig(unsigned char *c,unsigned char *d, short BG,short Zc,short Kb,short block_length);
