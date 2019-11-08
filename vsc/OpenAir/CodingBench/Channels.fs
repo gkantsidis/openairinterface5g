@@ -1,8 +1,11 @@
 ﻿namespace OpenAir.Bench
 
 module Channel =
+    open System
     open System.Collections.Generic
     open System.Diagnostics.Contracts
+    open Metrics
+    open Utils
 
     type ChannelException (message:string, ?innerException:exn) =
         inherit BenchException(
@@ -63,3 +66,20 @@ module Channel =
         static member Apply<'T> (input : 'T list) : 'T list = input
 
         static member Apply<'T> (input : 'T seq) : 'T seq = input
+
+    module Gaussian =
+        open MathNet.Numerics.Distributions
+
+        type Binary =
+            static member Error (snr : SNR) =
+                let sigma = 1.0 / Math.Sqrt(2.0 * snr.linear)
+                // Seed does not matter here
+                let gaussian = Normal(0.0, sigma, Random(12))
+                1.0 - gaussian.CumulativeDistribution(1.0)
+
+            static member Capacity (snr : SNR) =
+                let p = Binary.Error snr
+                let h = entropy p
+                1.0 - h
+
+        let inline capacity (snr : SNR) = Math.Log(1.0 + snr.linear, 2.0)

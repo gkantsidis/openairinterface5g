@@ -129,5 +129,38 @@ module Sources =
             Contract.EndContractBlock()
             rng.NextBytes(entries)
 
+    type Binary =
+        static member Random(length, rng : System.Random) =
+            if length <= 0 then
+                error "Length must be positive, it is %d; aborting operation" length
+                raise (invalidArg "length" "Length must be positive")
+            Contract.EndContractBlock()
 
+            List.init length (fun _ -> if rng.NextDouble() > 0.5 then 1uy else 0uy)
 
+        static member Random(length : int, seed : int) =
+            if length <= 0 then
+                error "Length must be positive, it is %d; aborting operation" length
+                raise (invalidArg "length" "Length must be positive")
+            Contract.EndContractBlock()
+
+            let rng = Random(seed)
+            Binary.Random(length, rng)
+
+        static member Random(rng : System.Random) =
+            Seq.initInfinite (fun _ -> if rng.NextDouble() > 0.5 then 1uy else 0uy)
+
+        static member RandomSeq(seed : int) =
+            let rng = System.Random(seed)
+            Binary.Random(rng)
+
+        static member Alternate(length) =
+            if length <= 0 then
+                error "Length must be positive, it is %d; aborting operation" length
+                raise (invalidArg "length" "Length must be positive")
+            Contract.EndContractBlock()
+
+            List.init length (fun i -> if i % 2 = 0 then 0uy else 1uy)
+
+        static member Alternate() =
+            Seq.initInfinite (fun i -> if i % 2 = 0 then 0uy else 1uy)

@@ -1,6 +1,10 @@
 source https://www.nuget.org/api/v2
+nuget Deedle
+nuget Deedle.Math
+nuget Deedle.RPlugin
 nuget MathNet.Numerics
 nuget NLOG
+nuget RProvider
 nuget xunit
 nuget xunit.runner.console
 nuget xunit.runner.visualstudio

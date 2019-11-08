@@ -6,6 +6,7 @@
 #r "OpenAir.NET.dll"
 
 #load "Errors.fs"
+#load "Metrics.fs"
 #load "Channels.fs"
 #load "Quantizer.fs"
 #load "Sources.fs"
@@ -18,7 +19,7 @@ let encoder = OpenAir.LDPC.SimpleEncoder()
 let decoder = new OpenAir.LDPC.Decoder()
 
 let input = Sources.Random.Make (Configuration.MAX_BLOCK_LENGTH, 13)
-let configuration = Configuration.MkFromBlockLength(input.Length, 1, 3)
+let configuration = Configuration.MkFromBlockLength(input.Length, 2, 3)
 
 let channel_input = encoder.EncodeFull(input, configuration)
 
@@ -45,12 +46,13 @@ let add_gaussian_noise (rng : System.Random) (snr : float) (input : System.Colle
     let snr_linear = Math.Pow(10.0, snr / 10.0)
     let sigma = 1.0 / Math.Sqrt(2.0 * snr_linear)
 
-    let gaussian = MathNet.Numerics.Distributions.Normal(0.0, 1.0, rng)
+    let gaussian = Normal(0.0, 1.0, rng)
     let samples = gaussian.Samples()
     Seq.map2 (
         fun value noise ->
             let v = if value = 1uy then -1.0 elif value = 0uy then 1.0 else failwithf "Illegal value %d" value
             let nom = v + sigma * noise
+            // let denom = sigma * sigma / (4.0 * 4.0)
             let denom = sigma / (4.0 * 4.0)
             nom / denom
 
@@ -96,7 +98,8 @@ with
 let evaluate (input : byte[]) seed snr extra iterations =
     let rng = Random(seed)
 
-    let stop = channel_input.Start + input.Length * 8 + extra
+    let start = 0
+    let stop = input.Length * 8 + extra
     let ratio = (float(stop) - float(start)) / (8.0 * float(input.Length))
 
     let channel_output =
@@ -140,4 +143,56 @@ let evaluate (input : byte[]) seed snr extra iterations =
         BitErrors   = bit_errors
     }
 
-[ 1 .. 40] |> List.map (fun seed -> evaluate input seed 3.0 (284 + 1024) 1000) |> List.iter (printfn "%A")
+[ 1 .. 40] |> List.map (fun seed -> evaluate input seed 3.0 (284 + 1024) 200) |> List.iter (printfn "%A")
+
+let prob_uncoded_error (snr : float) =
+    let snr_linear = Math.Pow(10.0, snr / 10.0)
+    let sigma = 1.0 / Math.Sqrt(2.0 * snr_linear)
+    let gaussian2 = Normal(0.0, sigma, Random(12))
+    1.0 - gaussian2.CumulativeDistribution(1.0)
+
+let binary_channel_capacity (snr : float) =
+    let p = prob_uncoded_error snr
+    let p1 = 1.0 - p
+    let h = -p * Math.Log(p, 2.0) - p1 * Math.Log(p1, 2.0)
+    1.0 - h
+
+let shannon_capacity (snr : float) =
+    let snr_linear = Math.Pow(10.0, snr / 10.0)
+    Math.Log(1.0 + snr_linear, 2.0)
+
+let ideal_levels (snr : float) =
+    let snr_linear = Math.Pow(10.0, snr / 10.0)
+    Math.Sqrt(1.0 + snr_linear)
+
+prob_uncoded_error 3.0
+prob_uncoded_error 4.0
+prob_uncoded_error 5.0
+
+binary_channel_capacity 3.0
+binary_channel_capacity 4.0
+binary_channel_capacity 5.0
+
+shannon_capacity 3.0
+ideal_levels 3.0
+
+
+let yyy = [ 3.0..0.01..6.0 ] |> List.map (fun snr -> prob_uncoded_error snr, (1.0 - binary_channel_capacity snr)) |> List.sortBy fst
+
+let snr = 3.0
+let snr_linear = Math.Pow(10.0, snr / 10.0)
+let sigma = 1.0 / Math.Sqrt(2.0 * snr_linear)
+let gaussian = Normal(0.0, 1.0, Random(12))
+
+let out2 =
+    Seq.map2 (
+        fun value noise ->
+            let v = if value = 1uy then -1.0 elif value = 0uy then 1.0 else failwithf "Illegal value %d" value
+            let nom = v + sigma * noise
+            let denom = sigma * sigma / (4.0 * 4.0)
+            nom / denom, sigma * noise, nom, sigma
+
+    ) (Sources.Binary.Alternate(20)) (gaussian.Samples())
+    |> Seq.toList
+    //|> quantize 8
+    //|> Seq.toList
