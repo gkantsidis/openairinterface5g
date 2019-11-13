@@ -1,15 +1,4 @@
-﻿#I @"../../.paket/load/net472"
-#load "MathNet.Numerics.fsx"
-#load "NLog.fsx"
-
-#I @"..\x64\Debug\"
-#r "OpenAir.NET.dll"
-
-#load "Errors.fs"
-#load "Metrics.fs"
-#load "Channels.fs"
-#load "Quantizer.fs"
-#load "Sources.fs"
+﻿#load "Init.fsx"
 
 open System
 open OpenAir.LDPC
@@ -143,7 +132,16 @@ let evaluate (input : byte[]) seed snr extra iterations =
         BitErrors   = bit_errors
     }
 
-[ 1 .. 40] |> List.map (fun seed -> evaluate input seed 3.0 (284 + 1024) 200) |> List.iter (printfn "%A")
+let snr = Metrics.snr 4.0
+let overhead =
+    float(8 * Configuration.MAX_BLOCK_LENGTH) * (1.0 - Channel.Gaussian.Binary.Capacity snr)
+    |> Math.Ceiling
+    |> int
+
+[ 1 .. 50_000]
+|> List.map (fun seed -> evaluate input seed snr.value (overhead + 128) 200 )
+|> List.filter (fun v -> v.IsCorrect = false)
+|> List.iter (printfn "%A")
 
 let prob_uncoded_error (snr : float) =
     let snr_linear = Math.Pow(10.0, snr / 10.0)
@@ -179,8 +177,7 @@ ideal_levels 3.0
 
 let yyy = [ 3.0..0.01..6.0 ] |> List.map (fun snr -> prob_uncoded_error snr, (1.0 - binary_channel_capacity snr)) |> List.sortBy fst
 
-let snr = 3.0
-let snr_linear = Math.Pow(10.0, snr / 10.0)
+let snr_linear = (Metrics.snr 3.0).linear
 let sigma = 1.0 / Math.Sqrt(2.0 * snr_linear)
 let gaussian = Normal(0.0, 1.0, Random(12))
 
