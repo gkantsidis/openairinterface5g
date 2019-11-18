@@ -82,4 +82,13 @@ module Channel =
                 let h = entropy p
                 1.0 - h
 
+            static member SnrFromCodeRate (rate : float) =
+               let target_entropy = 1.0 - rate
+               let target_error = inverse_entropy target_entropy
+               let target_cdf = 1.0 - target_error
+               let target_erf = 2.0 * target_cdf - 1.0
+               let target_ratio = MathNet.Numerics.SpecialFunctions.ErfInv(target_erf)
+               let sigma = 1.0 / (target_ratio * Math.Sqrt(2.0))
+               snr_from_sigma sigma
+
         let inline capacity (snr : SNR) = Math.Log(1.0 + snr.linear, 2.0)

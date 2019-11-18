@@ -31,3 +31,11 @@ s <- s + geom_point(size=3.0)
 s <- s + expand_limits(x = 0, y = 0)
 s <- s + scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0))
 s
+
+
+snr_for_rate <- read.csv(file.path(ez.csp(), 'snr_for_rate_binary_awgn.csv'))
+s4r <- make_plot(data=snr_for_rate) + aes(x = Rate, y = SNR)
+s4r <- s4r + geom_point(size=3.0)
+s4r <- s4r + expand_limits(x = 0.75, y = 0)
+s4r <- s4r + scale_x_continuous(expand = c(0.75, 0.75)) + scale_y_continuous(expand = c(0, 0))
+s4r

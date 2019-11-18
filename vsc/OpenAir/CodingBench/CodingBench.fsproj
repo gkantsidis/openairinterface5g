@@ -73,12 +73,12 @@
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Errors.fs" />
     <Compile Include="Metrics.fs" />
-    <Compile Include="..\..\..\..\..\..\..\..\Repos\Me\Universe\Engineering\openairinterface5g\vsc\OpenAir\CodingBench\Utils.fs" />
+    <Compile Include="Utils.fs" />
     <Compile Include="Channels.fs" />
     <Compile Include="Quantizer.fs" />
     <Compile Include="Sources.fs" />
-    <None Include="..\..\..\..\..\..\..\..\Repos\Me\Universe\Engineering\openairinterface5g\vsc\OpenAir\CodingBench\Init.fsx" />
-    <None Include="..\..\..\..\..\..\..\..\Repos\Me\Universe\Engineering\openairinterface5g\vsc\OpenAir\CodingBench\Limits.fsx" />
+    <None Include="Init.fsx" />
+    <None Include="Limits.fsx" />
     <None Include="Script.fsx" />
     <Content Include="packages.config" />
   </ItemGroup>

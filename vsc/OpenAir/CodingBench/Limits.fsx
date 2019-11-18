@@ -36,3 +36,15 @@ let save frame filename =
 
 save binary_gaussian_error_capacity_profile "ideal"
 
+type SnrForRateProfile =
+    { Rate : float; SNR : float}
+
+let binary_gaussian_snr_for_rate =
+    [ 0.75..0.001..0.99 ]
+    |> List.map (
+        fun rate ->
+            let snr = Channel.Gaussian.Binary.SnrFromCodeRate rate
+            { Rate = rate; SNR = snr.value }
+    ) |> Frame.ofRecords
+
+save binary_gaussian_snr_for_rate "snr_for_rate_binary_awgn"

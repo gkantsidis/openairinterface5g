@@ -14,6 +14,10 @@ NUGET
     DynamicInterop (0.8.1)
     FSharp.Charting (2.1)
       FSharp.Core (>= 4.0.0.1)
+    FSharp.Collections.ParallelSeq (1.1.2)
+      FSharp.Core (>= 4.0.0.1) - restriction: >= net45
+      FSharp.Core (>= 4.3.4) - restriction: && (< net45) (>= netstandard2.0)
+      System.ValueTuple (>= 4.3.1) - restriction: >= net45
     FSharp.Core (4.7)
     MathNet.Numerics (4.9)
       NETStandard.Library (>= 2.0.3) - restriction: && (< net40) (>= netstandard1.3) (< netstandard2.0)
@@ -793,6 +797,7 @@ NUGET
       Microsoft.NETCore.Platforms (>= 1.1) - restriction: && (< monoandroid) (< monotouch) (< net451) (>= netstandard1.2) (< win81) (< wpa81) (< xamarinios) (< xamarinmac) (< xamarintvos) (< xamarinwatchos)
       Microsoft.NETCore.Targets (>= 1.1) - restriction: && (< monoandroid) (< monotouch) (< net451) (>= netstandard1.2) (< win81) (< wpa81) (< xamarinios) (< xamarinmac) (< xamarintvos) (< xamarinwatchos)
       System.Runtime (>= 4.3) - restriction: && (< monoandroid) (< monotouch) (< net451) (>= netstandard1.2) (< win81) (< wpa81) (< xamarinios) (< xamarinmac) (< xamarintvos) (< xamarinwatchos)
+    System.ValueTuple (4.5) - restriction: >= net45
     System.Xml.ReaderWriter (4.3.1) - restriction: || (&& (< monoandroid) (< monotouch) (< net35) (>= netstandard1.5) (< netstandard2.0) (< xamarintvos) (< xamarinwatchos)) (&& (< monoandroid) (< monotouch) (< net40) (>= netstandard1.3) (< netstandard2.0) (< win8) (< wpa81) (< xamarintvos) (< xamarinwatchos)) (&& (< monoandroid) (< net35) (>= netstandard1.3) (< netstandard1.5)) (&& (< monoandroid4.4) (< net35) (< netstandard1.2) (>= netstandard1.3) (< win8)) (&& (< monoandroid4.4) (< net35) (< netstandard1.2) (>= netstandard1.5) (< win8)) (&& (< monoandroid4.4) (< net35) (>= netstandard1.3) (< netstandard1.4) (< win8) (< wpa81)) (&& (< monoandroid4.4) (< net35) (< netstandard1.3) (>= netstandard1.5) (< win8) (< wpa81)) (&& (< monoandroid4.4) (< net35) (>= netstandard1.4) (< netstandard1.5) (< win8) (< wpa81)) (&& (< monoandroid4.4) (< net35) (< netstandard1.4) (>= netstandard1.5) (< win8) (< wpa81)) (&& (< monoandroid4.4) (< net35) (>= netstandard1.5) (< netstandard1.6) (< win8) (< wpa81)) (&& (< monoandroid4.4) (< net35) (< netstandard1.5) (>= netstandard1.6) (< win8) (< wpa81)) (&& (< monoandroid4.4) (< net35) (>= netstandard1.6) (< netstandard2.0) (< win8) (< wpa81)) (&& (< net35) (>= net46) (< netstandard1.4)) (&& (< net35) (>= netstandard1.3) (< portable-net45+win8+wpa81)) (&& (< net35) (>= netstandard1.5) (< portable-net45+win8+wpa81)) (&& (< netstandard1.5) (>= uap10.0) (< uap10.1))
       System.Collections (>= 4.3) - restriction: && (< monoandroid) (< monotouch) (< net45) (>= netstandard1.3) (< win8) (< wpa81) (< xamarinios) (< xamarinmac) (< xamarintvos) (< xamarinwatchos)
       System.Diagnostics.Debug (>= 4.3) - restriction: && (< monoandroid) (< monotouch) (< net45) (>= netstandard1.3) (< win8) (< wpa81) (< xamarinios) (< xamarinmac) (< xamarintvos) (< xamarinwatchos)
