@@ -92,3 +92,65 @@ module Channel =
                snr_from_sigma sigma
 
         let inline capacity (snr : SNR) = Math.Log(1.0 + snr.linear, 2.0)
+
+        type Noise =
+            static member Add(rng: System.Random, snr: SNR, input: float list) : float list=
+                let sigma = 1.0 / Math.Sqrt(2.0 * snr.linear)
+                let gaussian = Normal(0.0, sigma, rng)
+                input |> List.map(fun value -> value + gaussian.Sample())
+
+            static member Add(seed, snr: SNR, input: float list) =
+                let rng = Random(seed)
+                Noise.Add(rng, snr, input)
+
+            static member Add(rng: System.Random, snr: SNR, input: float seq) : float seq=
+                let sigma = 1.0 / Math.Sqrt(2.0 * snr.linear)
+                let gaussian = Normal(0.0, sigma, rng)
+                input |> Seq.map(fun value -> value + gaussian.Sample())
+
+            static member Add(rng: System.Random, snr: SNR, input: IReadOnlyList<float>) : IReadOnlyList<float> =
+                if isNull input then
+                    error "Input vector should not be null; aborting"
+                    raise (nullArg "input")
+                Contract.EndContractBlock()
+                Contract.Ensures((isNull (Contract.Result<IReadOnlyList<float>>())) = false)
+
+                let sigma = 1.0 / Math.Sqrt(2.0 * snr.linear)
+                let gaussian = Normal(0.0, sigma, rng)
+                let result = input |> Seq.map(fun value -> value + gaussian.Sample())
+                (result |> Seq.toList) :> IReadOnlyList<float>
+
+            static member MapL(rng: System.Random, snr: SNR) =
+                let sigma = 1.0 / Math.Sqrt(2.0 * snr.linear)
+                let gaussian = Normal(0.0, sigma, rng)
+                List.map(fun value -> value + gaussian.Sample())
+
+            static member MapL(seed, snr: SNR) =
+                let rng = Random(seed)
+                Noise.MapL(rng, snr)
+
+            static member Map(rng: System.Random, snr: SNR) =
+                let sigma = 1.0 / Math.Sqrt(2.0 * snr.linear)
+                let gaussian = Normal(0.0, sigma, rng)
+                Seq.map(fun value -> value + gaussian.Sample())
+
+            static member Map(seed, snr: SNR) =
+                let rng = Random(seed)
+                Noise.Map(rng, snr)
+
+        module Array =
+            let add (rng: System.Random, snr: SNR) (input : float []) =
+                let sigma = 1.0 / Math.Sqrt(2.0 * snr.linear)
+                let gaussian = Normal(0.0, sigma, rng)
+                let output : float [] = Array.zeroCreate input.Length
+                gaussian.Samples(output)
+
+                Array.iteri (fun i v -> output.[i] <- v + input.[i]) output
+
+                output
+
+            let add_in_place (rng: System.Random, snr: SNR) (input : float []) =
+                let sigma = 1.0 / Math.Sqrt(2.0 * snr.linear)
+                let gaussian = Normal(0.0, sigma, rng)
+                input |> Array.iteri (fun i v -> input.[i] <- v + gaussian.Sample())
+                input

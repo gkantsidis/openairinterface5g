@@ -22,4 +22,8 @@ module Utils =
         let derivative : Func<float, float> =  Func<float, float> (fun x -> Math.Log(1.0 - x, 2.0) - Math.Log(x, 2.0))
         let lower = inverse_entropy_lower y
         MathNet.Numerics.RootFinding.RobustNewtonRaphson.FindRoot(estimate, derivative, lower, 0.5)
-    
+
+    /// Count the number of ones in the binary representation of the input number
+    let rec count_bits (number : byte) =
+        if number = 0uy then 0
+        else 1 + count_bits (number &&& (number - 1uy))

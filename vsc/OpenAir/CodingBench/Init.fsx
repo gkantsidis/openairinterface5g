@@ -1,6 +1,7 @@
 ﻿#I @"../../.paket/load/net472"
 #load "MathNet.Numerics.fsx"
 #load "NLog.fsx"
+#load "FSharp.Collections.ParallelSeq.fsx"
 #load "R.NET.fsx"
 #load "R.NET.FSharp.fsx"
 #load "R.NET.Community.fsx"

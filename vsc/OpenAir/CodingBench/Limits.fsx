@@ -48,3 +48,4 @@ let binary_gaussian_snr_for_rate =
     ) |> Frame.ofRecords
 
 save binary_gaussian_snr_for_rate "snr_for_rate_binary_awgn"
+

@@ -79,6 +79,7 @@
     <Compile Include="Sources.fs" />
     <None Include="Init.fsx" />
     <None Include="Limits.fsx" />
+    <None Include="CheckCorrectness.fsx" />
     <None Include="Script.fsx" />
     <Content Include="packages.config" />
   </ItemGroup>

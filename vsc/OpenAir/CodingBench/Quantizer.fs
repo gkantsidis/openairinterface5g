@@ -167,3 +167,47 @@ module Quantizer =
             static member Inv (input : IReadOnlyList<float>) : IList<int> =
                 let result = List.init input.Count (fun i -> input.Item i |> inv)
                 List(result) :> IList<int>
+
+            module Array =
+                let inline map_byte_in_place (output : float []) (input : byte []) =
+                    if output.Length <> input.Length then
+                        error "Arrays must have same length, they have %d <> %d; exiting"
+                            output.Length input.Length
+                        raise (invalidArg "output" "Invalid length")
+                    Contract.EndContractBlock()
+
+                    let len = input.Length
+
+                    for i in 0 .. (len - 1) do
+                        output.[i] <- int(input.[i]) |> map
+
+                    output
+
+    let private quantize_f_q (levels : int) value =
+        assert (levels > 0)
+        let bits_to_shift = levels - 1
+        let maxlev = (1 <<< bits_to_shift) |> float
+        let level =
+            if value <= -maxlev     then -maxlev
+            elif value >= maxlev    then maxlev - 1.0
+            else value
+        sbyte(level)
+
+    module Seq =
+        let quantize levels (input : float seq) = input |> Seq.map (quantize_f_q levels)
+
+    module List =
+        let quantize levels (input : float list) = input |> List.map (quantize_f_q levels)
+
+    module Array =
+        let quantize_in_place levels (output : sbyte []) (input : float []) =
+            if output.Length <> input.Length then
+                error "Arrays must have same length, they have %d <> %d; exiting"
+                    output.Length input.Length
+                raise (invalidArg "output" "Invalid length")
+            Contract.EndContractBlock()
+
+            for i in 0 .. (input.Length - 1) do
+                output.[i] <- quantize_f_q levels input.[i]
+
+            output
