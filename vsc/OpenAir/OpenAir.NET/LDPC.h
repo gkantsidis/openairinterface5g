@@ -751,9 +751,6 @@ namespace OpenAir::LDPC {
         }
 
         /// <summary>   Decodes. </summary>
-        ///
-        /// <remarks>   Chrisgk, 05/11/2019. </remarks>
-        ///
         /// <exception cref="ArgumentNullException">
         /// Thrown when one or more required arguments are null.
         /// </exception>

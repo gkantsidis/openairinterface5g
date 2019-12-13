@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenAir.NET.Tests", "OpenAi
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "CodingBench", "CodingBench\CodingBench.fsproj", "{C0DC9B26-95AF-4F47-A262-952A15802138}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OpenAirDll", "OpenAirDll\OpenAirDll.vcxproj", "{F8E1BB7C-A556-4434-A65F-E260B0DECED1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -105,6 +107,16 @@ Global
 		{C0DC9B26-95AF-4F47-A262-952A15802138}.Release|x64.Build.0 = Release|Any CPU
 		{C0DC9B26-95AF-4F47-A262-952A15802138}.Release|x86.ActiveCfg = Release|Any CPU
 		{C0DC9B26-95AF-4F47-A262-952A15802138}.Release|x86.Build.0 = Release|Any CPU
+		{F8E1BB7C-A556-4434-A65F-E260B0DECED1}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{F8E1BB7C-A556-4434-A65F-E260B0DECED1}.Debug|x64.ActiveCfg = Debug|x64
+		{F8E1BB7C-A556-4434-A65F-E260B0DECED1}.Debug|x64.Build.0 = Debug|x64
+		{F8E1BB7C-A556-4434-A65F-E260B0DECED1}.Debug|x86.ActiveCfg = Debug|Win32
+		{F8E1BB7C-A556-4434-A65F-E260B0DECED1}.Debug|x86.Build.0 = Debug|Win32
+		{F8E1BB7C-A556-4434-A65F-E260B0DECED1}.Release|Any CPU.ActiveCfg = Release|Win32
+		{F8E1BB7C-A556-4434-A65F-E260B0DECED1}.Release|x64.ActiveCfg = Release|x64
+		{F8E1BB7C-A556-4434-A65F-E260B0DECED1}.Release|x64.Build.0 = Release|x64
+		{F8E1BB7C-A556-4434-A65F-E260B0DECED1}.Release|x86.ActiveCfg = Release|Win32
+		{F8E1BB7C-A556-4434-A65F-E260B0DECED1}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
