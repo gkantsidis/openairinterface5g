@@ -169,7 +169,7 @@ module Quantizer =
                 List(result) :> IList<int>
 
             module Array =
-                let inline map_byte_in_place (output : float []) (input : byte []) =
+                let map_byte_in_place (output : float []) (input : byte []) =
                     if output.Length <> input.Length then
                         error "Arrays must have same length, they have %d <> %d; exiting"
                             output.Length input.Length

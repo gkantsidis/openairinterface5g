@@ -144,7 +144,6 @@ int32_t ldpc_decode(DecoderInfo decoder, uint8_t base_graph, uint16_t lifting_si
         return LDPC_DECODER_INVALID_OUTPUT_MODE;
     }
 
-    t_nrLDPC_procBuf* _p_nrLDPC_procBuf = (t_nrLDPC_procBuf*)decoder;
     t_nrLDPC_time_stats profiler;
     auto result = nrLDPC_decoder(&params, p_llr, (int8_t*)p_llrOut, _p_nrLDPC_procBuf, &profiler);
     return result;
