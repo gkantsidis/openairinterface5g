@@ -52,6 +52,11 @@
     <Compile Include="Encoder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="NativeMethods.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -76,22 +81,26 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-  <Target Name="CopyNativeLibrary" Condition=" '$(Platform)' == 'AnyCPU' " BeforeTargets='PrepareForBuild' >
+  <Target Name="CopyNativeLibrary" Condition=" '$(Platform)' == 'AnyCPU' " BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <NativeX64Path>$(MSBuildProjectDirectory)\native\x64</NativeX64Path>
       <NativeWin32Path>$(MSBuildProjectDirectory)\native\win32</NativeWin32Path>
     </PropertyGroup>
-    <Message Text="Will copy native DLL's to $(NativeX64Path) and $(NativeWin32Path)" />
+    <Message Text="Will create and copy native DLL's to $(NativeX64Path) and $(NativeWin32Path)" />
+	<Delete Files="$(NativeX64Path)\OpenAirDll.dll" />
+	<Delete Files="$(NativeWin32Path)\OpenAirDll.dll" />
+    <MSBuild Projects="..\OpenAirDll\OpenAirDll.vcxproj" Properties="Configuration=$(Configuration); Architecture='Win32' " />
+    <MSBuild Projects="..\OpenAirDll\OpenAirDll.vcxproj" Properties="Configuration=$(Configuration); Architecture='x64' " />
     <MakeDir Directories="$(NativeX64Path)" />
     <MakeDir Directories="$(NativeWin32Path)" />
     <Copy SourceFiles="..\x64\$(Configuration)\OpenAirDll.dll" DestinationFiles="$(NativeX64Path)\OpenAirDll.dll" SkipUnchangedFiles="true" OverwriteReadOnlyFiles="true" />
     <Copy SourceFiles="..\$(Configuration)\OpenAirDll.dll" DestinationFiles="$(NativeWin32Path)\OpenAirDll.dll" SkipUnchangedFiles="true" OverwriteReadOnlyFiles="true" />
   </Target>
   <ItemGroup Condition=" '$(Platform)' == 'AnyCPU' ">
-	<Content Include=".\native\x64\OpenAirDll.dll">
+    <Content Include=".\native\x64\OpenAirDll.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-	<Content Include=".\native\win32\OpenAirDll.dll">
+    <Content Include=".\native\win32\OpenAirDll.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -105,6 +114,12 @@
     <Analyzer Include="..\..\..\..\..\..\..\..\CxCache\Microsoft.NetCore.Analyzers.2.9.6\analyzers\dotnet\cs\Microsoft.NetCore.CSharp.Analyzers.dll" />
     <Analyzer Include="..\..\..\..\..\..\..\..\CxCache\Microsoft.NetFramework.Analyzers.2.9.6\analyzers\dotnet\cs\Microsoft.NetFramework.Analyzers.dll" />
     <Analyzer Include="..\..\..\..\..\..\..\..\CxCache\Microsoft.NetFramework.Analyzers.2.9.6\analyzers\dotnet\cs\Microsoft.NetFramework.CSharp.Analyzers.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

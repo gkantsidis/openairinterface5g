@@ -38,7 +38,7 @@ int ldpc_encode_simple(unsigned char* input, int input_length, unsigned char* en
     return result;
 }
 
-int ldpc_encode_full(unsigned char* input, unsigned char* encoded, int block_length, int base_graph)
+int ldpc_encode_full(unsigned char* input, int input_length, unsigned char* encoded, int base_graph)
 {
     if (input == NULL)
     {
@@ -48,7 +48,7 @@ int ldpc_encode_full(unsigned char* input, unsigned char* encoded, int block_len
     {
         return LDPC_ARGUMENT_NULL_ERROR;
     }
-    if (block_length <= 0)
+    if (input_length <= 0)
     {
         return LDPC_LENGTH_ERROR;
     }
@@ -56,20 +56,24 @@ int ldpc_encode_full(unsigned char* input, unsigned char* encoded, int block_len
     {
         return LDPC_BASE_GRAPH_INVALID;
     }
-    if (block_length > MAX_BLOCK_LENGTH)
+    if (input_length > MAX_BLOCK_LENGTH)
     {
         return LDPC_LENGTH_ERROR;
     }
 
 
-    short BL = block_length * 8;
+    short BL = input_length * 8;
     auto result = ldpc_encoder_orig_full(input, encoded, BL, (short)base_graph);
     if (result.Start == -1 || result.Count == -1 || result.Length == 0)
     {
         return LDPC_ENCODE_FAILED;
     }
+    if (result.Length != BUFFER_LENGTH)
+    {
+        return LDPC_ENCODE_UNEXPECTED_OUTPUT_LENGTH;
+    }
 
-    return result.Length;
+    return 0;
 }
 
 DecoderInfo create_decoder()
