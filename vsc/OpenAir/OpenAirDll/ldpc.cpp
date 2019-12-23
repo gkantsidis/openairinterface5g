@@ -100,7 +100,7 @@ void free_decoder(DecoderInfo decoder)
     }
 }
 
-int32_t ldpc_decode(DecoderInfo decoder, uint8_t base_graph, uint16_t lifting_size, uint8_t decoding_rate, uint8_t max_iterations, int output_mode, int8_t* p_llr, unsigned char* p_llrOut)
+int32_t ldpc_decode(DecoderInfo decoder, int base_graph, int lifting_size, int decoding_rate, int max_iterations, int output_mode, int8_t* p_llr, unsigned char* p_llrOut)
 {
     t_nrLDPC_procBuf* _p_nrLDPC_procBuf = (t_nrLDPC_procBuf*)decoder;
     if (_p_nrLDPC_procBuf == NULL)
@@ -123,12 +123,28 @@ int32_t ldpc_decode(DecoderInfo decoder, uint8_t base_graph, uint16_t lifting_si
     {
         return LDPC_ARGUMENT_NULL_ERROR;
     }
+    if (base_graph > UINT8_MAX || base_graph < 0)
+    {
+        return LDPC_ARGUMENT_ERROR;
+    }
+    if (lifting_size < 0 || lifting_size > UINT16_MAX)
+    {
+        return LDPC_ARGUMENT_ERROR;
+    }
+    if (decoding_rate < 0 || decoding_rate > UINT8_MAX)
+    {
+        return LDPC_ARGUMENT_ERROR;
+    }
+    if (max_iterations <= 0 || max_iterations > UINT8_MAX)
+    {
+        return LDPC_ARGUMENT_ERROR;
+    }
 
     t_nrLDPC_dec_params params;
-    params.BG = base_graph;
-    params.numMaxIter = max_iterations;
-    params.R = decoding_rate;
-    params.Z = lifting_size;
+    params.BG = (uint8_t)base_graph;
+    params.numMaxIter = (uint8_t)max_iterations;
+    params.R = (uint8_t)decoding_rate;
+    params.Z = (uint16_t)lifting_size;
 
     switch (output_mode)
     {

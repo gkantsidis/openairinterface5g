@@ -15,6 +15,18 @@ namespace OpenAirShim
         [DllImport("OpenAirDll.dll", EntryPoint = "ldpc_encode_full", CallingConvention = CallingConvention.Cdecl)]
         internal static extern int EncodeFull(IntPtr input, int input_length, IntPtr encoded, int base_graph);
 
+        [DllImport("OpenAirDll.dll", EntryPoint = "create_decoder", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr CreateDecoder();
+
+        [DllImport("OpenAirDll.dll", EntryPoint = "create_decoder", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr FreeDecoder(IntPtr decoder);
+
+        [DllImport("OpenAirDll.dll", EntryPoint = "ldpc_decode", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int Decode(
+            IntPtr decoder, int base_graph, int lifting_size, int decoding_rate, int max_iterations, int output_mode,
+            IntPtr p_llr, IntPtr p_llrOut);
+
+
         static SafeNativeMethods()
         {
             InitializeRuntime.CheckAndLoad();

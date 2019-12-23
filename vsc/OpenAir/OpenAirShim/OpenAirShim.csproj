@@ -49,6 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Common.cs" />
+    <Compile Include="Decoder.cs" />
     <Compile Include="Encoder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="NativeMethods.cs" />
@@ -87,8 +88,8 @@
       <NativeWin32Path>$(MSBuildProjectDirectory)\native\win32</NativeWin32Path>
     </PropertyGroup>
     <Message Text="Will create and copy native DLL's to $(NativeX64Path) and $(NativeWin32Path)" />
-	<Delete Files="$(NativeX64Path)\OpenAirDll.dll" />
-	<Delete Files="$(NativeWin32Path)\OpenAirDll.dll" />
+    <Delete Files="$(NativeX64Path)\OpenAirDll.dll" />
+    <Delete Files="$(NativeWin32Path)\OpenAirDll.dll" />
     <MSBuild Projects="..\OpenAirDll\OpenAirDll.vcxproj" Properties="Configuration=$(Configuration); Architecture='Win32' " />
     <MSBuild Projects="..\OpenAirDll\OpenAirDll.vcxproj" Properties="Configuration=$(Configuration); Architecture='x64' " />
     <MakeDir Directories="$(NativeX64Path)" />

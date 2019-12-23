@@ -6,6 +6,13 @@
         BG2 = 2
     }
 
+    public enum OutputMode
+    {
+        Bit     = 0,
+        BitInt8 = 1,
+        LLR     = 2
+    }
+
     [System.Serializable]
     public class OpenAirShimException : System.Exception
     {

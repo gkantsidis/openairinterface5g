@@ -70,7 +70,16 @@ namespace OpenAirShim.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Error in calling encoder.
+        ///   Looks up a localized string similar to Error when calling decoder.
+        /// </summary>
+        internal static string MessageErrorCallingDecoder {
+            get {
+                return ResourceManager.GetString("MessageErrorCallingDecoder", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error when calling encoder.
         /// </summary>
         internal static string MessageErrorCallingEncoder {
             get {

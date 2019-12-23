@@ -120,7 +120,10 @@
   <data name="MessageCannotLoadNativeLibrary" xml:space="preserve">
     <value>Cannot load native library</value>
   </data>
+  <data name="MessageErrorCallingDecoder" xml:space="preserve">
+    <value>Error when calling decoder</value>
+  </data>
   <data name="MessageErrorCallingEncoder" xml:space="preserve">
-    <value>Error in calling encoder</value>
+    <value>Error when calling encoder</value>
   </data>
 </root>
