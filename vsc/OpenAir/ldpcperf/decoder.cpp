@@ -1,4 +1,5 @@
 #include <memory>
+#include <Windows.h>
 
 extern "C"
 {
@@ -16,26 +17,32 @@ typedef struct _DecodeEvalParameters {
     int Iterations;
 } DecodeEvalParameters;
 
-void* parse_decode_params()
+std::shared_ptr<void> parse_decode_params()
 {
-    DecodeEvalParameters * params = (DecodeEvalParameters *) malloc(sizeof(DecodeEvalParameters));
+    auto params = std::make_shared<DecodeEvalParameters>();
+    if (params == nullptr)
+    {
+        // TODO: record error
+        return nullptr;
+    }
 
     params->Seed = 10;
     params->DecoderIterations = 100;
 
     params->Iterations = 100;
 
-    return (void*)params;
+    return params;
 }
 
-void eval_decode(void * params)
+void eval_decode(const std::shared_ptr<void>& params)
 {
-    if (params == NULL)
+    if (params == nullptr)
     {
+        // TODO: record error
         return;
     }
 
-    DecodeEvalParameters* p = (DecodeEvalParameters*)params;
+    auto p = std::reinterpret_pointer_cast<DecodeEvalParameters>(params);
 
     auto size = 68 * 384;
     auto length = 1056;
@@ -76,16 +83,40 @@ void eval_decode(void * params)
     std::unique_ptr<int8_t[]> output = std::make_unique<int8_t[]>(bit_length);
     memset(output.get(), 0x00, bit_length);
 
-    //t_nrLDPC_dec_params params;
-    //params.BG = configuration.BG();
-    //params.Z = configuration.Zc();
-    //params.R = configuration.R();
+    t_nrLDPC_dec_params decoder_params;
+    decoder_params.BG = configuration.BG();
+    decoder_params.Z = configuration.Zc();
+    decoder_params.R = configuration.R();
 
-    //params.numMaxIter = 10;
-    //params.outMode = e_nrLDPC_outMode::nrLDPC_outMode_BIT;
+    decoder_params.numMaxIter = p->DecoderIterations;
+    decoder_params.outMode = e_nrLDPC_outMode::nrLDPC_outMode_BIT;
 
-    //auto iterations = decode(&params, channel_output.get(), output.get());
+    t_nrLDPC_time_stats profiler;
+    t_nrLDPC_procBuf* _p_nrLDPC_procBuf = nrLDPC_init_mem();
+    if (_p_nrLDPC_procBuf == NULL)
+    {
+        // TODO: record error
+        return;
+    }
 
+    LARGE_INTEGER StartingTime, EndingTime, ElapsedMicroseconds;
+    LARGE_INTEGER Frequency;
 
-    free(params);
+    QueryPerformanceFrequency(&Frequency);
+
+    for (size_t experiment = 0; experiment < p->Iterations; experiment++)
+    {
+        QueryPerformanceCounter(&StartingTime);
+        auto actual_iterations = nrLDPC_decoder(&decoder_params, channel_output.get(), output.get(), _p_nrLDPC_procBuf, &profiler);
+        QueryPerformanceCounter(&EndingTime);
+        ElapsedMicroseconds.QuadPart = EndingTime.QuadPart - StartingTime.QuadPart;
+
+        ElapsedMicroseconds.QuadPart *= 1000000;
+        ElapsedMicroseconds.QuadPart /= Frequency.QuadPart;
+
+        printf("%d %d %lld\n", experiment, actual_iterations, ElapsedMicroseconds.QuadPart);
+        // TODO: record statistics from profiler
+    }
+
+    nrLDPC_free_mem(_p_nrLDPC_procBuf);
 }
