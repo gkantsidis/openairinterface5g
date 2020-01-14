@@ -120,6 +120,7 @@ NUGET
       System.Threading.Thread (>= 4.0) - restriction: && (< monoandroid4.4) (< net35) (>= netstandard1.5) (< netstandard2.0)
       System.Xml.XmlDocument (>= 4.0.1) - restriction: || (&& (< monoandroid4.4) (< net35) (>= netstandard1.3) (< netstandard1.5)) (&& (< monoandroid4.4) (< net35) (>= netstandard1.5) (< netstandard2.0))
     NuGet.Frameworks (5.3.1) - restriction: >= netcoreapp2.1
+    python (3.6.8)
     R.NET (1.7)
       DynamicInterop (0.8.1)
     R.NET.Community (1.7)

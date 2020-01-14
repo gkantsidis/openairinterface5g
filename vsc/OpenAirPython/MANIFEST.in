@@ -1,0 +1,4 @@
+graft OpenAirLDPC\.libs
+graft OpenAirLDPC
+global-exclude *.py[cod]
+global-exclude .idea/*
