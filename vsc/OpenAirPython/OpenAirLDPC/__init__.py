@@ -15,4 +15,4 @@ from . import decoder
 
 __all__ = ('encoder', 'decoder', 'errors')
 
-logging.getLogger(__name__).addHandler(logging.NullHandler)
+logging.getLogger('OpenLDPC').addHandler(logging.NullHandler)
