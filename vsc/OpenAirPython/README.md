@@ -8,3 +8,9 @@ TBD: Long description
 python setup.py sdist
 pip wheel -w dist --verbose .
 ```
+
+## Source code checking
+
+```PowerShell
+pylint OpenAirLDPC --rcfile .\pylint.conf
+```

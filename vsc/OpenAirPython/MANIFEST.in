@@ -1,4 +1,6 @@
 graft OpenAirLDPC\.libs
 graft OpenAirLDPC
-global-exclude *.py[cod]
+global-exclude test_*.py
+global-exclude test/*
 global-exclude .idea/*
+global-exclude __pycache__/*
