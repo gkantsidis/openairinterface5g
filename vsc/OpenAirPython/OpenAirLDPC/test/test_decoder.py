@@ -74,3 +74,5 @@ def test_determined_truncated():
 
     for i in range(len(buffer)-1):
         assert buffer[i] == output.decoded[i], f'Error in {i}, expected {buffer[i]}, got {output.decoded[i]}'
+
+    assert len(buffer) == len(output.decoded)

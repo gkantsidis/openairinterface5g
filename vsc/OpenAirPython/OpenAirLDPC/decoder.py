@@ -84,4 +84,6 @@ class Decoder:
 
         success = iterations <= max_iterations
 
-        return DecodeResult(success, iterations, bytearray(raw_output))
+        decoded = bytearray(raw_output)
+        decoded = decoded[:MAX_BLOCK_LENGTH]
+        return DecodeResult(success, iterations, decoded)
