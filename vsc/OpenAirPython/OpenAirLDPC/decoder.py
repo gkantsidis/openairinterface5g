@@ -72,7 +72,8 @@ class Decoder:
         # raw_channel_output = get_data_ofs(channel_output)
         raw_channel_output = (c_int8 * len(channel_output))()
         # raw_channel_output = (c_int8 * BUFFER_LENGTH)(get_data_ofs(channel_output))
-        raw_output = (c_char * BUFFER_LENGTH)()
+        # Observe that we need number of bits in the buffer given to decoder.
+        raw_output = (c_char * (8*MAX_BLOCK_LENGTH))()
 
         for i in range(len(channel_output) - 1):
             raw_channel_output[i] = channel_output[i]
