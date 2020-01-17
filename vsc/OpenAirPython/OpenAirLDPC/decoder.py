@@ -62,26 +62,31 @@ class Decoder:
         assert self.__decoder is not None
         assert len(channel_output) == BUFFER_LENGTH
 
-        print('Inside decode')
-        # TODO: move to common
+        # TODO: Avoid buffer copies in decoder
+        # It would be ideal to avoid buffer copies in decoder. In particular, this seems possible
+        # for the input channel_output. For the output (assuming an in-place implementation),
+        # it may be tricky because the C library expects a buffer 8 times the size of the input.
+
+        # TODO: move decoder parameters to common
         lifting = 384
         bg = 1
         decoding_rate = 13
         output_mode = 0
 
-        # raw_channel_output = get_data_ofs(channel_output)
-        raw_channel_output = (c_int8 * len(channel_output))()
-        # raw_channel_output = (c_int8 * BUFFER_LENGTH)(get_data_ofs(channel_output))
-        # Observe that we need number of bits in the buffer given to decoder.
-        raw_output = (c_char * (8*MAX_BLOCK_LENGTH))()
-
+        # TODO: move raw_channel_output and raw_output to common code
+        # There is no reason to construct those buffers for every call.
+        # However, Python does not want to allow them as attributes to the class.
+        raw_channel_output = (c_int8 * BUFFER_LENGTH)()
         for i in range(len(channel_output) - 1):
             raw_channel_output[i] = channel_output[i]
 
-        print('Entering decoder')
+        # Observe that we need number of bits in the buffer given to decoder.
+        raw_output = (c_char * (8*MAX_BLOCK_LENGTH))()
+
+        logger.info("Calling decoder")
         iterations = _lib.decode(self.__decoder.value, bg, lifting, decoding_rate, max_iterations, output_mode,
                                  raw_channel_output, raw_output)
-        print('Decoder done')
+        logger.info("Decoder done in %d iterations (%d)", iterations, max_iterations)
 
         success = iterations <= max_iterations
 
