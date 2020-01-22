@@ -648,13 +648,17 @@ cleanup_and_return:
   return result;
 }
 
-#ifdef _WINDOWS
 EncoderInfo ldpc_encoder_orig_full(unsigned char* test_input, unsigned char* channel_input, short block_length, short BG)
 {
     EncoderInfo result = { .Start = -1, .Count = -1, .Length = 0 };
 
+#ifdef _WINDOWS
     static __declspec(thread) unsigned char* c = NULL;
     static __declspec(thread) unsigned char* d = NULL;
+#else
+    static __thread unsigned char* c = NULL;
+    static __thread unsigned char* d = NULL;
+#endif
 
     if (c == NULL) c = (unsigned char*)malloc(22 * 384 * sizeof(unsigned char)); //padded input, unpacked, max size
     if (d == NULL) d = (unsigned char*)malloc(68 * 384 * sizeof(unsigned char)); //coded output, unpacked, max size
@@ -811,4 +815,3 @@ EncoderInfo ldpc_encoder_orig_full(unsigned char* test_input, unsigned char* cha
 cleanup_and_return:
     return result;
 }
-#endif

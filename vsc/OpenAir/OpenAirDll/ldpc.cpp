@@ -1,9 +1,9 @@
 #include "pch.h"
 #include "ldpc.h"
 
-#include "nrLDPC_encoder\defs.h"
-#include "nrLDPC_decoder\nrLDPC_init_mem.h"
-#include "nrLDPC_decoder\nrLDPC_decoder.h"
+#include "nrLDPC_encoder/defs.h"
+#include "nrLDPC_decoder/nrLDPC_init_mem.h"
+#include "nrLDPC_decoder/nrLDPC_decoder.h"
 
 int ldpc_encode_simple(unsigned char* input, int input_length, unsigned char* encoded, int base_graph)
 {
