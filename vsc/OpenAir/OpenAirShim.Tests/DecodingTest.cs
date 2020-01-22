@@ -3,6 +3,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace OpenAirShim.Tests
 {
+    using OpenAirShim;
+
     [TestClass]
     public class DecodingTest
     {

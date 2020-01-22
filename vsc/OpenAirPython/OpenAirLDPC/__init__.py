@@ -12,6 +12,7 @@ from . import _distributor_init
 from . import errors
 from . import encoder
 from . import decoder
+from . import rate
 
 __all__ = ('encoder', 'decoder', 'errors')
 

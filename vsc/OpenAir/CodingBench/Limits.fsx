@@ -11,7 +11,7 @@ type BinaryGaussianProfile  =
     { SNR : float; UncodedBer : float; Capacity : float; ShannonCapacity : float }
 
 let binary_gaussian_error_capacity_profile : Deedle.Frame<int, string> =
-    [2.0..0.01..8.0]
+    [-2.0..0.01..8.0]
     |> List.map snr
     |> List.map (
         fun snr ->

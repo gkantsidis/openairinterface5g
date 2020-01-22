@@ -305,6 +305,101 @@ namespace LDPCTests
             }
         }
 
+        TEST_METHOD(TestEncodeAndDecodeWithRandomBitFlips)
+        {
+            auto seed = 18;
+            auto size = 68 * 384;
+            auto length = 1056;
+            auto bit_length = 8 * length;
+
+            auto uncoded_ber = 0.015; // 9824 bits transmitted, around 147 bits of error
+            srand(seed);
+            // Around 0.86 efficiency
+            auto starting_bit = 768;
+            auto last_bit = 10592;
+
+            auto configuration = Configuration::MakeFromBlockLength(length, 1, 3);
+
+            std::unique_ptr<unsigned char[]> input = std::make_unique<unsigned char[]>(length);
+            std::unique_ptr<unsigned char[]> channel = std::make_unique<unsigned char[]>(size);
+
+            Assert::IsNotNull(input.get());
+            Assert::IsNotNull(channel.get());
+
+            if (channel == NULL || input == NULL)
+            {
+                // We already test above; this is used to avoid the warning below
+                Assert::Fail();
+                return;
+            }
+
+            srand(seed);
+            for (size_t i = 0; i < length; i++)
+            {
+                input[i] = i & 0xFF;
+            }
+
+            memset(channel.get(), 0x00, sizeof(unsigned char) * size);
+            ldpc_encoder_orig_full(input.get(), channel.get(), length * 8, configuration.BG());
+
+            auto errors = 0;
+            for (size_t i = 0; i < size; i++)
+            {
+                if (i < starting_bit || i >= last_bit)
+                {
+                    // We don't transmit that bit
+                    channel[i] = 0x00;
+                }
+                else
+                {
+                    auto failure = ((float)rand()) / ((float)RAND_MAX);
+                    if (failure <= uncoded_ber)
+                    {
+                        // We flip the bit here.
+                        channel[i] = (channel[i] == 1) ? 0x60 : -0x60;
+                        // channel[i] = (channel[i] == 1) ? 0x40 : -0x40;
+                        errors++;
+                    }
+                    else
+                    {
+                        channel[i] = (channel[i] == 0) ? 0x7F : -0x80;
+                    }
+                }
+            }
+
+            // The following needs to be 8 x input buffer. Actually, it should also be at least 8x8=64 bytes.
+            std::unique_ptr<int8_t[]> output = std::make_unique<int8_t[]>(bit_length);
+            memset(output.get(), 0x00, bit_length);
+
+            t_nrLDPC_dec_params params;
+            params.BG = configuration.BG();
+            params.Z = configuration.Zc();
+            params.R = configuration.R();
+
+            params.numMaxIter = 50;
+            params.outMode = e_nrLDPC_outMode::nrLDPC_outMode_BIT;
+
+            auto iterations = decode(&params, (int8_t*)channel.get(), output.get());
+
+            /*auto total_byte_errors = 0;
+            for (size_t i = 0; i < length; i++)
+            {
+                auto expected = input[i];
+                auto actual = (unsigned char)output[i];
+                if (expected != actual)
+                {
+                    total_byte_errors++;
+                }
+            }*/
+
+            for (size_t i = 0; i < length; i++)
+            {
+                auto expected = (int8_t)input[i];
+                auto actual = output[i];
+                Assert::AreEqual(expected, actual);
+            }
+        }
+
     private:
         int32_t decode(t_nrLDPC_dec_params * params, int8_t* channel, int8_t* output)
         {
