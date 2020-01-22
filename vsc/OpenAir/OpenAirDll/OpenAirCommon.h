@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(__NT__)
+#if defined(__NT__) || defined(_WINDOWS)
 
 #ifdef OPENAIRDLL_EXPORTS
 #define OPENAIRDLL_API  __declspec(dllexport)
