@@ -26,14 +26,14 @@ class BaseGraph(Enum):
 
 class CodeRate:
     __slots__ = ('__base_graph', '__systematic_columns', '__number_of_rows', '__lift_size',
-                 '__nominator', '__denominator', '__block_length', '__block_length_in_bits')
+                 '__numerator', '__denominator', '__block_length', '__block_length_in_bits')
 
-    def __init__(self, block_length: int, nominator_rate: int, denominator_rate: int):
+    def __init__(self, block_length: int, numerator_rate: int, denominator_rate: int):
         """
         Provides ranges for the coding rate
 
         :param block_length: Block length (in bytes)
-        :param nominator_rate: Nominator of coding rate
+        :param numerator_rate: Nominator of coding rate
         :param denominator_rate: Denominator of coding rate
         """
 
@@ -44,7 +44,7 @@ class CodeRate:
             logger.error('Very large block length; aborting')
             raise ValueError(f'Block length must be <= {MAX_BLOCK_LENGTH}, it is {block_length}')
 
-        self.__nominator = nominator_rate
+        self.__numerator = numerator_rate
         self.__denominator = denominator_rate
 
         block_length_in_bits = block_length * 8
@@ -84,7 +84,7 @@ class CodeRate:
 
     @property
     def code_rate(self) -> int:
-        if self.__nominator == 1:
+        if self.__numerator == 1:
             if self.__denominator == 5:
                 if self.__base_graph == 2:
                     return _code_rate[0]
@@ -98,7 +98,7 @@ class CodeRate:
             else:
                 raise NotImplementedError()
 
-        elif self.__nominator == 2:
+        elif self.__numerator == 2:
             if self.__denominator == 5:
                 return _code_rate[2]
             elif self.__denominator == 3:
@@ -106,13 +106,13 @@ class CodeRate:
             else:
                 raise NotImplementedError()
 
-        elif self.__nominator == 22 and self.__denominator == 30:
+        elif self.__numerator == 22 and self.__denominator == 30:
             return _code_rate[5]
 
-        elif self.__nominator == 22 and self.__denominator == 27:
+        elif self.__numerator == 22 and self.__denominator == 27:
             return _code_rate[6]
 
-        elif self.__nominator == 22 and self.__denominator == 25:
+        elif self.__numerator == 22 and self.__denominator == 25:
             if self.base_graph == BaseGraph.BaseGraph1:
                 return _code_rate[7]
             else:
@@ -124,7 +124,7 @@ class CodeRate:
     @property
     def _number_of_punctured_columns(self) -> int:
         first = (self.__number_of_rows - 2) * self.__lift_size + self.__block_length_in_bits
-        second = self.__block_length_in_bits * float(self.__denominator) / float(self.__nominator)
+        second = self.__block_length_in_bits * float(self.__denominator) / float(self.__numerator)
         result = first - second
         result = result / self.__lift_size
         return int(result)
@@ -133,7 +133,7 @@ class CodeRate:
     def _number_of_removed_bits(self) -> int:
         first = (self.__number_of_rows - self._number_of_punctured_columns - 2) * self.__lift_size + \
                 self.__block_length_in_bits
-        second = float(self.__block_length_in_bits) * float(self.__denominator) / float(self.__nominator)
+        second = float(self.__block_length_in_bits) * float(self.__denominator) / float(self.__numerator)
         result = first - second
         return int(result)
 
