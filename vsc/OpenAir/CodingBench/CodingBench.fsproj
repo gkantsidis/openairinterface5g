@@ -81,6 +81,7 @@
     <None Include="Limits.fsx" />
     <None Include="CheckCorrectness.fsx" />
     <None Include="Script.fsx" />
+    <None Include="BitFlips.fsx" />
     <Content Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
