@@ -22,7 +22,7 @@ def _wrap_function(lib, function_name, restype, argument_types):
 
 
 _VC_COMPILER_VER = 'vc142'
-_BUILD = 'debug'
+_BUILD = 'release'
 
 _architecture = platform.architecture()
 if _architecture == ('64bit', 'WindowsPE'):
@@ -60,7 +60,7 @@ if os.name == 'nt':
 
     except Exception as ex:
         logger.fatal('Cannot load native library, error {}; aborting', ex)
-        raise SystemError('Cannot load library')
+        raise SystemError(f'Cannot load library; error: {ex}')
 
 elif os.name == 'posix':
     from ctypes import cdll
