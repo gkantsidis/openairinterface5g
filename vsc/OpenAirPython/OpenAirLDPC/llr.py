@@ -22,7 +22,7 @@ def llr_to_decoder_input(sigma: float, llr: List[float]) -> List[float]:
     """
 
     # TODO: verify this model
-    
+
     # We want to compute: (16*sqrt(2)/loge) * sigma * LLR
     constant = 16.0 * sqrt(2) / log10(e)
     return [constant * sigma * x for x in llr]
