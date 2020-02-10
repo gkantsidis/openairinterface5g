@@ -6,10 +6,12 @@ __all__ = ('Decoder', 'DecoderError')
 
 import logging
 from ctypes import c_void_p, c_int8, c_char, c_char_p, pythonapi, cast, py_object, pointer, c_size_t
-from typing import NamedTuple, Optional
+from numpy import ndarray
+from typing import NamedTuple, Optional, Tuple
 from . import _distributor_init as _lib
+from . import _numpyhelper as nph
 from .errors import LdpcError
-from .common import MAX_BLOCK_LENGTH, BUFFER_LENGTH
+from .common import MAX_BLOCK_LENGTH, BUFFER_LENGTH, BASE_GRAPH_1
 
 logger = logging.getLogger('OpenLDPC')
 
@@ -73,7 +75,7 @@ class Decoder:
 
         # TODO: move decoder parameters to common
         lifting = 384
-        bg = 1
+        bg = BASE_GRAPH_1
         decoding_rate = 13
         output_mode = 0
 
@@ -89,3 +91,30 @@ class Decoder:
 
         decoded = bytearray(self.__raw_output[:MAX_BLOCK_LENGTH])
         return DecodeResult(success, iterations, decoded)
+
+    def decode_numpy(self, llr: ndarray, decoded: ndarray, max_iterations: int = 50) -> Tuple[bool, int]:
+        """
+        Decode using pre-allocated numpy arrays.
+        :param llr: Vector of LLRs
+        :param decoded: Vector where to store output
+        :param max_iterations: Maximum iterations to run
+        :return: Tuple of success (bool) and number of iterations.
+        """
+        assert self.__decoder is not None
+        assert len(llr) == BUFFER_LENGTH
+
+        lifting = 384
+        bg = BASE_GRAPH_1
+        decoding_rate = 13
+        output_mode = 0
+
+        llr_addr = nph.get_addr_of_llr(llr)
+        decoded_addr = nph.get_addr_of_decoder_output(decoded, rw=True)
+
+        logger.info("Calling decoder")
+        iterations = _lib.decode_raw(self.__decoder.value, bg, lifting, decoding_rate, max_iterations, output_mode,
+                                     llr_addr, decoded_addr)
+        logger.info("Decoder done in %d iterations (%d)", iterations, max_iterations)
+
+        success = iterations <= max_iterations
+        return success, iterations

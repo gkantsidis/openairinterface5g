@@ -3,7 +3,7 @@ Unit tests for decoder functionality
 """
 
 import random
-import math
+import numpy as np
 from .. import decoder, common, encoder, rate
 
 
@@ -150,3 +150,38 @@ def test_bit_flips_truncated_to_086():
         assert buffer[i] == output.decoded[i], f'Error in {i}, expected {buffer[i]}, got {output.decoded[i]}'
 
     assert len(buffer) == len(output.decoded)
+
+
+def test_all_zero_numpy():
+    """Test sending all zero buffer without errors using numpy"""
+    decoder_input = np.full(shape=(common.BUFFER_LENGTH, 1), fill_value=0x7F, dtype=np.int8)
+    output = np.ndarray(shape=(common.BUFFER_LENGTH, 1), dtype=np.uint8)
+
+    with decoder.Decoder() as decoder_object:
+        (success, iterations) = decoder_object.decode_numpy(decoder_input, output)
+
+    assert success
+    assert np.count_nonzero(output) == 0
+
+
+def test_determined_numpy():
+    """Test sending a predetermined sequence with no errors using numpy"""
+
+    np.random.seed(12)
+    buffer = np.random.randint(1, 255, size=(common.MAX_BLOCK_LENGTH, 1), dtype=np.uint8)
+    channel_in = np.ndarray(shape=(common.BUFFER_LENGTH, 1), dtype=np.uint8)
+    encoder_result = encoder.encode_numpy(buffer, channel_in)
+
+    decoder_input = np.zeros(shape=(common.BUFFER_LENGTH, 1), dtype=np.int8)
+    for i in range(common.BUFFER_LENGTH - 1):
+        decoder_input[i] = 0x7F if channel_in[i] == 0x00 else 0x80
+
+    output = np.ndarray(shape=(common.BUFFER_LENGTH, 1), dtype=np.uint8)
+    with decoder.Decoder() as decoder_object:
+        (success, iterations) = decoder_object.decode_numpy(decoder_input, output)
+
+    assert success
+    # output_concatenated = np.take(output, range(common.MAX_BLOCK_LENGTH))
+    # assert np.array_equal(buffer, output_concatenated)
+    for i in range(len(buffer)-1):
+        assert buffer[i] == output[i], f'Error in {i}, expected {buffer[i]}, got {output[i]}'

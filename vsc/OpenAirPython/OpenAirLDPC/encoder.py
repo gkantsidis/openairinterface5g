@@ -56,11 +56,18 @@ def encode_in_place(buffer: bytes, channel_input: bytearray) -> int:
 
 
 def encode_numpy(buffer: ndarray, channel_input: ndarray) -> int:
+    """
+    Encode using existing numpy arrays
+
+    :param buffer: The input array (bytes to encode)
+    :param channel_input: The input to the channel. Every byte in this array is a bit and gets values 0 or 1.
+    :return: Result of encoding
+    """
     length = len(buffer)
     assert length == MAX_BLOCK_LENGTH
 
     buffer_addr = nph.get_addr_of_input_buffer(buffer)
-    channel_addr = nph.get_addr_of_encoder_buffer(channel_input)
+    channel_addr = nph.get_addr_of_encoder_buffer(channel_input, rw=True)
     # print(f'Buffer={hex(buffer_addr)}, Channel={hex(channel_addr)}')
     result = _lib.encode_full_raw(buffer_addr, length, channel_addr, BASE_GRAPH_1)
     return result
