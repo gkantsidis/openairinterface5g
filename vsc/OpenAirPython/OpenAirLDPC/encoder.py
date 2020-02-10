@@ -6,9 +6,11 @@ __all__ = ('encode', 'EncoderError')
 
 import logging
 from ctypes import c_ubyte
+from numpy import ndarray
 from . import _distributor_init as _lib
+from . import _numpyhelper as nph
 from .errors import LdpcError
-from .common import MAX_BLOCK_LENGTH, BUFFER_LENGTH
+from .common import MAX_BLOCK_LENGTH, BUFFER_LENGTH, BASE_GRAPH_1
 
 logger = logging.getLogger('OpenLDPC')
 
@@ -29,7 +31,7 @@ def encode(buffer: bytes) -> bytearray:
     assert length == MAX_BLOCK_LENGTH
     raw_buffer = (c_ubyte*len(buffer))(*(buffer))
     raw_output = (c_ubyte*BUFFER_LENGTH)()
-    result = _lib.encode_full(raw_buffer, length, raw_output, 1)
+    result = _lib.encode_full(raw_buffer, length, raw_output, BASE_GRAPH_1)
     if result < 0:
         logger.error("Encoder returned value %d", result)
         raise(EncoderError(f'Encoder returned {result}'))
@@ -51,3 +53,14 @@ def encode_in_place(buffer: bytes, channel_input: bytearray) -> int:
 
     # TODO: Implement in place encoding
     raise NotImplementedError()
+
+
+def encode_numpy(buffer: ndarray, channel_input: ndarray) -> int:
+    length = len(buffer)
+    assert length == MAX_BLOCK_LENGTH
+
+    buffer_addr = nph.get_addr_of_input_buffer(buffer)
+    channel_addr = nph.get_addr_of_encoder_buffer(channel_input)
+    # print(f'Buffer={hex(buffer_addr)}, Channel={hex(channel_addr)}')
+    result = _lib.encode_full_raw(buffer_addr, length, channel_addr, BASE_GRAPH_1)
+    return result

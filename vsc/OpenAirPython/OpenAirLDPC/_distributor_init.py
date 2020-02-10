@@ -7,7 +7,7 @@ __all__ = ('open_air', 'create_decoder', 'delete_decoder', 'encode_simple', 'enc
 import logging
 import os
 import platform
-from ctypes import c_void_p, c_int, POINTER, c_ubyte, c_byte, c_char, c_int8
+from ctypes import c_void_p, c_int, c_int64, c_int32, POINTER, c_ubyte, c_byte, c_char, c_int8
 
 
 logger = logging.getLogger('OpenLDPC')
@@ -54,6 +54,13 @@ if os.name == 'nt':
         encode_full = _wrap_function(open_air, 'ldpc_encode_full',
                                      c_int, [POINTER(c_ubyte), c_int, POINTER(c_ubyte), c_int])
 
+        if _PLATFORM == 'amd64':
+            encode_full_raw = _wrap_function(open_air, 'ldpc_encode_full',
+                                             c_int, [c_int64, c_int, c_int64, c_int])
+        else:
+            encode_full_raw = _wrap_function(open_air, 'ldpc_encode_full',
+                                             c_int, [c_int32, c_int, c_int32, c_int])
+
         decode = _wrap_function(open_air, 'ldpc_decode',
                                 c_int, [c_void_p, c_int, c_int, c_int, c_int, c_int, POINTER(c_int8), POINTER(c_char)])
 
@@ -78,6 +85,13 @@ elif os.name == 'posix':
                                        c_int, [POINTER(c_ubyte), c_int, POINTER(c_ubyte), c_int])
         encode_full = _wrap_function(open_air, 'ldpc_encode_full',
                                      c_int, [POINTER(c_ubyte), c_int, POINTER(c_ubyte), c_int])
+
+        if _PLATFORM == 'amd64':
+            encode_full_raw = _wrap_function(open_air, 'ldpc_encode_full',
+                                             c_int, [c_int64, c_int, c_int64, c_int])
+        else:
+            encode_full_raw = _wrap_function(open_air, 'ldpc_encode_full',
+                                             c_int, [c_int32, c_int, c_int32, c_int])
 
         decode = _wrap_function(open_air, 'ldpc_decode',
                                 c_int, [c_void_p, c_int, c_int, c_int, c_int, c_int, POINTER(c_int8), POINTER(c_char)])
