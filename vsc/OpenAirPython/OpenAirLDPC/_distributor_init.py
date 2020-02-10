@@ -52,7 +52,7 @@ if os.name == 'nt':
         raise SystemError(f'Cannot load library; error: {ex}')
 
 elif os.name == 'posix':
-    target = f'libLDPC-x64.so'
+    target = f'libLDPC-{_BUILD}-x64.so'
     library = os.path.join(libs_dir, target)
     logging.info("Loading library %s from %s", target, library)
 

@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="OpenAirLDPC", # Replace with your own username
-    version="0.0.3",
+    version="0.0.4",
     author="Christos Gkantsidis",
     author_email="chrisgk@microsoft.com",
     description="Exposes to Python an interface to the OpenAir's implementation of LDPC",
@@ -21,4 +21,7 @@ setuptools.setup(
     python_requires='>=3.6',
     package_data={'OpenAirLDPC': ['.libs/*']},
     exclude_package_data={'OpenAirLDPC': ['test_*.py']},
+    install_requires=[
+        'numpy'
+    ],
 )

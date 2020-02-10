@@ -161,7 +161,8 @@ def test_all_zero_numpy():
         (success, iterations) = decoder_object.decode_numpy(decoder_input, output)
 
     assert success
-    assert np.count_nonzero(output) == 0
+    for i in range(common.MAX_BLOCK_LENGTH - 1):
+        assert output[i] == 0, f'Error in {i}, expected 0, got {output[i]}'
 
 
 def test_determined_numpy():
