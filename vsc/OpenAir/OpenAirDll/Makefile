@@ -8,7 +8,7 @@ CODING	= $(ROOT)/openair1/PHY/CODING
 BINARIES = $(ROOT)/cmake_targets/phy_simulators/build/
 LIBPHY	= libPHY_NR.a
 
-CFLAGS	= -I. -I$(CODING) -I$(OPENAIR1) -fpic -DOPENAIRDLL_EXPORTS -D__UNIX__ -Wall
+CFLAGS	= -I. -I$(CODING) -I$(OPENAIR1) -fpic -DOPENAIRDLL_EXPORTS -D__UNIX__ -Wall -O3
 
 PYTHONDIR = ../../OpenAirPython/OpenAirLDPC/.libs/
 
