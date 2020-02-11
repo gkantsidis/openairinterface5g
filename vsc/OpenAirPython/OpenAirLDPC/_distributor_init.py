@@ -7,7 +7,7 @@ __all__ = ('open_air', 'create_decoder', 'delete_decoder', 'encode_simple', 'enc
 import logging
 import os
 import platform
-from ctypes import c_void_p, c_int, c_int64, c_int32, POINTER, c_ubyte, c_byte, c_char, c_int8
+from ctypes import c_void_p, c_int, c_int64, c_int32, POINTER, c_ubyte, c_char, c_int8
 
 
 logger = logging.getLogger('OpenLDPC')
@@ -48,7 +48,7 @@ if os.name == 'nt':
         from ctypes import WinDLL
         open_air = WinDLL(os.path.abspath(library))
     except Exception as ex:
-        logger.fatal('Cannot load native library, error {}; aborting', ex)
+        logger.fatal('Cannot load native library, error %s; aborting', str(ex))
         raise SystemError(f'Cannot load library; error: {ex}')
 
 elif os.name == 'posix':
@@ -61,7 +61,7 @@ elif os.name == 'posix':
         open_air = cdll.LoadLibrary(library)
 
     except Exception as ex:
-        logger.fatal('Cannot load native library, error {}; aborting', ex)
+        logger.fatal('Cannot load native library, error %s; aborting', str(ex))
         raise SystemError('Cannot load library')
 
 else:
@@ -93,5 +93,5 @@ try:
 
 
 except Exception as ex:
-    logger.fatal('Cannot make bindings to native library, error {}; aborting', ex)
+    logger.fatal('Cannot make bindings to native library, error %s; aborting', str(ex))
     raise SystemError('Cannot load library')

@@ -6,8 +6,8 @@ __all__ = ('Decoder', 'DecoderError')
 
 import logging
 from ctypes import c_void_p, c_int8, c_char, c_char_p, pythonapi, cast, py_object, pointer, c_size_t
-from numpy import ndarray
 from typing import NamedTuple, Optional, Tuple
+from numpy import ndarray
 from . import _distributor_init as _lib
 from . import _numpyhelper as nph
 from .errors import LdpcError
@@ -25,10 +25,15 @@ DecodeResult = NamedTuple('DecodeResult', [
 
 class DecoderError(LdpcError):
     """Errors during decoding process"""
-    pass
 
 
 def get_data_ofs(buf):
+    """
+    Retrieve the pointer of the data of a buffer (?)
+    :param buf: Input object
+    :return: Address of data
+    """
+    # TODO: Fix documentation above
     data = c_char_p()
     pythonapi.PyObject_AsCharBuffer(py_object(buf), pointer(data), pointer(c_size_t()))
     return cast(data, c_void_p).value
@@ -49,7 +54,7 @@ class Decoder:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        logger.info('Deleting decoder {}', self.__decoder)
+        logger.info('Deleting decoder %s', str(self.__decoder))
         _lib.delete_decoder(self.__decoder.value)
         self.__decoder = None
 
@@ -75,7 +80,7 @@ class Decoder:
 
         # TODO: move decoder parameters to common
         lifting = 384
-        bg = BASE_GRAPH_1
+        base_graph = BASE_GRAPH_1
         decoding_rate = 13
         output_mode = 0
 
@@ -83,7 +88,7 @@ class Decoder:
         raw_channel_output = (c_int8 * BUFFER_LENGTH).from_buffer(channel_output)
 
         logger.info("Calling decoder")
-        iterations = _lib.decode(self.__decoder.value, bg, lifting, decoding_rate, max_iterations, output_mode,
+        iterations = _lib.decode(self.__decoder.value, base_graph, lifting, decoding_rate, max_iterations, output_mode,
                                  raw_channel_output, self.__raw_output)
         logger.info("Decoder done in %d iterations (%d)", iterations, max_iterations)
 
@@ -104,7 +109,7 @@ class Decoder:
         assert len(llr) == BUFFER_LENGTH
 
         lifting = 384
-        bg = BASE_GRAPH_1
+        base_graph = BASE_GRAPH_1
         decoding_rate = 13
         output_mode = 0
 
@@ -112,8 +117,8 @@ class Decoder:
         decoded_addr = nph.get_addr_of_decoder_output(decoded, rw=True)
 
         logger.info("Calling decoder")
-        iterations = _lib.decode_raw(self.__decoder.value, bg, lifting, decoding_rate, max_iterations, output_mode,
-                                     llr_addr, decoded_addr)
+        iterations = _lib.decode_raw(self.__decoder.value, base_graph, lifting, decoding_rate, max_iterations,
+                                     output_mode, llr_addr, decoded_addr)
         logger.info("Decoder done in %d iterations (%d)", iterations, max_iterations)
 
         success = iterations <= max_iterations

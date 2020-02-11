@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="OpenAirLDPC", # Replace with your own username
-    version="0.0.4",
+    version="0.0.5",
     author="Christos Gkantsidis",
     author_email="chrisgk@microsoft.com",
     description="Exposes to Python an interface to the OpenAir's implementation of LDPC",

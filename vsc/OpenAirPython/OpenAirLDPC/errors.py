@@ -1,5 +1,5 @@
 """
-
+Base for errors thrown in this module
 """
 
 __all__ = 'LdpcError'
@@ -12,4 +12,3 @@ class LdpcError(Exception, ABC):
     """
     Common exception for all module related exceptions
     """
-    pass

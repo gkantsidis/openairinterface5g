@@ -32,7 +32,7 @@ def test_encode_numpy_all_zero():
     """All zero buffers, return all zero encodings"""
     buffer = np.zeros(shape=(common.MAX_BLOCK_LENGTH, 1), dtype=np.uint8)
     channel_in = np.ndarray(shape=(common.BUFFER_LENGTH, 1), dtype=np.uint8)
-    result = encoder.encode_numpy(buffer, channel_in)
+    encoder.encode_numpy(buffer, channel_in)
     assert np.count_nonzero(channel_in) == 0
 
 
@@ -41,5 +41,5 @@ def test_encode_numpy_not_all_zero():
     np.random.seed(12)
     buffer = np.random.randint(1, 255, size=(common.MAX_BLOCK_LENGTH, 1), dtype=np.uint8)
     channel_in = np.ndarray(shape=(common.BUFFER_LENGTH, 1), dtype=np.uint8)
-    result = encoder.encode_numpy(buffer, channel_in)
+    encoder.encode_numpy(buffer, channel_in)
     assert np.count_nonzero(channel_in) > 0

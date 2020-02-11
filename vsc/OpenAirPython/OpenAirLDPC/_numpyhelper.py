@@ -46,7 +46,7 @@ def _check_and_get_array_address(arr: ndarray, size: int, ty: str, rw: bool) -> 
         raise TypeError("only __array_interface__ version 3 supported")
 
     shape = ai["shape"]
-    if not(shape == (size, 1) or shape == (1, size) or shape == (size, )):
+    if shape not in ((size, 1), (1, size), (size, )):
         raise TypeError(f"Unexpected dimensions for array {shape}")
     item_type = ai['typestr']
     if item_type != ty:
@@ -59,16 +59,40 @@ def _check_and_get_array_address(arr: ndarray, size: int, ty: str, rw: bool) -> 
 
 
 def get_addr_of_input_buffer(arr: ndarray, rw: bool = False) -> int:
+    """
+    Check that input is a valid input buffer and return its memory address
+    :param arr: Input buffer
+    :param rw: If true, it also checks that the input buffer is writeable
+    :return: Memory address for data in arr
+    """
     return _check_and_get_array_address(arr, MAX_BLOCK_LENGTH, '|u1', rw)
 
 
 def get_addr_of_encoder_buffer(arr: ndarray, rw: bool = False) -> int:
+    """
+    Check that input is a valid buffer for encoder output and return its memory address.
+    :param arr: Buffer for encoder output
+    :param rw: If true, it also checks that the input buffer is writeable
+    :return: Memory address for data in arr
+    """
     return _check_and_get_array_address(arr, BUFFER_LENGTH, '|u1', rw)
 
 
 def get_addr_of_llr(arr: ndarray, rw: bool = False) -> int:
+    """
+    Check that input is a valid buffer for LLRs and return its memory address.
+    :param arr: Buffer for input LLRs
+    :param rw: If true, it also checks that the input buffer is writeable
+    :return: Memory address for data in arr
+    """
     return _check_and_get_array_address(arr, BUFFER_LENGTH, '|i1', rw)
 
 
 def get_addr_of_decoder_output(arr: ndarray, rw: bool = True) -> int:
+    """
+    Checks that input is a valid buffer for output of decoder
+    :param arr: Buffer for decoder output
+    :param rw: If true, it also checks that the input buffer is writeable
+    :return: Memory address for data in arr
+    """
     return _check_and_get_array_address(arr, BUFFER_LENGTH, '|u1', rw)

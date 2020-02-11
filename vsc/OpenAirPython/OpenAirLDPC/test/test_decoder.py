@@ -9,6 +9,8 @@ from .. import decoder, common, encoder, rate
 
 def test_create_and_destroy_decoder():
     """Test correct creation and destruction of decoder objects"""
+    # The test is about creating and destroying the decoder
+    # pylint: disable=W0612
     with decoder.Decoder() as decoder_object:
         pass
 
@@ -78,6 +80,7 @@ def test_determined_truncated():
     assert len(buffer) == len(output.decoded)
 
 
+# pylint: disable= C0103
 def test_determined_truncated_to_086():
     """Test sending a predetermined sequence with no errors"""
 
@@ -158,7 +161,7 @@ def test_all_zero_numpy():
     output = np.ndarray(shape=(common.BUFFER_LENGTH, 1), dtype=np.uint8)
 
     with decoder.Decoder() as decoder_object:
-        (success, iterations) = decoder_object.decode_numpy(decoder_input, output)
+        (success, _) = decoder_object.decode_numpy(decoder_input, output)
 
     assert success
     for i in range(common.MAX_BLOCK_LENGTH - 1):
@@ -171,7 +174,7 @@ def test_determined_numpy():
     np.random.seed(12)
     buffer = np.random.randint(1, 255, size=(common.MAX_BLOCK_LENGTH, 1), dtype=np.uint8)
     channel_in = np.ndarray(shape=(common.BUFFER_LENGTH, 1), dtype=np.uint8)
-    encoder_result = encoder.encode_numpy(buffer, channel_in)
+    encoder.encode_numpy(buffer, channel_in)
 
     decoder_input = np.zeros(shape=(common.BUFFER_LENGTH, 1), dtype=np.int8)
     for i in range(common.BUFFER_LENGTH - 1):
@@ -179,7 +182,7 @@ def test_determined_numpy():
 
     output = np.ndarray(shape=(common.BUFFER_LENGTH, 1), dtype=np.uint8)
     with decoder.Decoder() as decoder_object:
-        (success, iterations) = decoder_object.decode_numpy(decoder_input, output)
+        (success, _) = decoder_object.decode_numpy(decoder_input, output)
 
     assert success
     # output_concatenated = np.take(output, range(common.MAX_BLOCK_LENGTH))

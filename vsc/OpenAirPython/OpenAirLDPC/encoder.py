@@ -17,7 +17,6 @@ logger = logging.getLogger('OpenLDPC')
 
 class EncoderError(LdpcError):
     """Errors during encoding process"""
-    pass
 
 
 def encode(buffer: bytes) -> bytearray:
@@ -34,7 +33,7 @@ def encode(buffer: bytes) -> bytearray:
     result = _lib.encode_full(raw_buffer, length, raw_output, BASE_GRAPH_1)
     if result < 0:
         logger.error("Encoder returned value %d", result)
-        raise(EncoderError(f'Encoder returned {result}'))
+        raise EncoderError(f'Encoder returned {result}')
 
     return bytearray(raw_output)
 
