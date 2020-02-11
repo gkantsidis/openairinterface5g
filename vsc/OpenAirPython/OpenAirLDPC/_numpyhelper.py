@@ -46,7 +46,7 @@ def _check_and_get_array_address(arr: ndarray, size: int, ty: str, rw: bool) -> 
         raise TypeError("only __array_interface__ version 3 supported")
 
     shape = ai["shape"]
-    if not(shape == (size, 1) or shape == (1, size)):
+    if not(shape == (size, 1) or shape == (1, size) or shape == (size, )):
         raise TypeError(f"Unexpected dimensions for array {shape}")
     item_type = ai['typestr']
     if item_type != ty:
