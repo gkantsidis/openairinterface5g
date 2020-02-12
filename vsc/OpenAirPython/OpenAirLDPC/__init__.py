@@ -9,9 +9,11 @@ Provides an interface to access OpenLDPC's LDPC encoder and decoder.
 import logging
 
 from . import _distributor_init
+from . import _numpyhelper
 from . import errors
 from . import encoder
 from . import decoder
+from . import llr
 from . import rate
 
 __all__ = ('encoder', 'decoder', 'errors')

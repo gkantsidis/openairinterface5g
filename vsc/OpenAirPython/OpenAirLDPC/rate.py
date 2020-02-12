@@ -20,20 +20,31 @@ _code_rate = (15, 13, 25, 12, 23, 34, 56, 89)
 
 
 class BaseGraph(Enum):
+    """
+    Type of Base Graph used in the encoder/decoder
+    """
     BaseGraph1 = 1
     BaseGraph2 = 2
 
 
+# pylint: disable= R0902
 class CodeRate:
+    """
+    Code rate computation as specified in the native library.
+    This class allows to pick encoding and decoding parameters for the code rates that
+    the native LDPC library provides.
+    """
     __slots__ = ('__base_graph', '__systematic_columns', '__number_of_rows', '__lift_size',
-                 '__nominator', '__denominator', '__block_length', '__block_length_in_bits')
+                 '__numerator', '__denominator', '__block_length', '__block_length_in_bits')
 
-    def __init__(self, block_length: int, nominator_rate: int, denominator_rate: int):
+    # Note: the code below needs to follow the logic of the native library.
+
+    def __init__(self, block_length: int, numerator_rate: int, denominator_rate: int):
         """
         Provides ranges for the coding rate
 
         :param block_length: Block length (in bytes)
-        :param nominator_rate: Nominator of coding rate
+        :param numerator_rate: Nominator of coding rate
         :param denominator_rate: Denominator of coding rate
         """
 
@@ -44,7 +55,7 @@ class CodeRate:
             logger.error('Very large block length; aborting')
             raise ValueError(f'Block length must be <= {MAX_BLOCK_LENGTH}, it is {block_length}')
 
-        self.__nominator = nominator_rate
+        self.__numerator = numerator_rate
         self.__denominator = denominator_rate
 
         block_length_in_bits = block_length * 8
@@ -76,16 +87,22 @@ class CodeRate:
 
     @property
     def base_graph(self) -> BaseGraph:
+        """Return the base graph"""
         return self.__base_graph
 
     @property
     def kb(self) -> int:
+        """Return the number of systematic columns"""
         return self.__systematic_columns
 
+    # The code below mimics the native code; it is better to resemble the native code in structure as well.
+    # pylint: disable=R0911, R0912
     @property
     def code_rate(self) -> int:
-        if self.__nominator == 1:
+        """Return the code base"""
+        if self.__numerator == 1:
             if self.__denominator == 5:
+                # pylint: disable=R1705
                 if self.__base_graph == 2:
                     return _code_rate[0]
                 else:
@@ -98,7 +115,8 @@ class CodeRate:
             else:
                 raise NotImplementedError()
 
-        elif self.__nominator == 2:
+        elif self.__numerator == 2:
+            # pylint: disable=R1705
             if self.__denominator == 5:
                 return _code_rate[2]
             elif self.__denominator == 3:
@@ -106,13 +124,13 @@ class CodeRate:
             else:
                 raise NotImplementedError()
 
-        elif self.__nominator == 22 and self.__denominator == 30:
+        elif self.__numerator == 22 and self.__denominator == 30:
             return _code_rate[5]
 
-        elif self.__nominator == 22 and self.__denominator == 27:
+        elif self.__numerator == 22 and self.__denominator == 27:
             return _code_rate[6]
 
-        elif self.__nominator == 22 and self.__denominator == 25:
+        elif self.__numerator == 22 and self.__denominator == 25:
             if self.base_graph == BaseGraph.BaseGraph1:
                 return _code_rate[7]
             else:
@@ -123,32 +141,38 @@ class CodeRate:
 
     @property
     def _number_of_punctured_columns(self) -> int:
+        """Return the number of punctured columns"""
         first = (self.__number_of_rows - 2) * self.__lift_size + self.__block_length_in_bits
-        second = self.__block_length_in_bits * float(self.__denominator) / float(self.__nominator)
+        second = self.__block_length_in_bits * float(self.__denominator) / float(self.__numerator)
         result = first - second
         result = result / self.__lift_size
         return int(result)
 
     @property
     def _number_of_removed_bits(self) -> int:
+        """Return the number of bits that have been removed"""
         first = (self.__number_of_rows - self._number_of_punctured_columns - 2) * self.__lift_size + \
                 self.__block_length_in_bits
-        second = float(self.__block_length_in_bits) * float(self.__denominator) / float(self.__nominator)
+        second = float(self.__block_length_in_bits) * float(self.__denominator) / float(self.__numerator)
         result = first - second
         return int(result)
 
     @property
     def _last_bit_position(self):
+        """Return the position of the last bit to use for transmission"""
         first = (self.__systematic_columns + self.__number_of_rows - self._number_of_punctured_columns) * \
                 self.__lift_size
         return first - self._number_of_removed_bits
 
     @property
     def range_to_use(self) -> List[int]:
+        """Return the range of bits to use for transmission"""
         return list(range(2 * self.__lift_size, 2 * self.__lift_size + self._last_bit_position))
 
 
+# pylint: disable=C0103
 Rate_1_3 = CodeRate(MAX_BLOCK_LENGTH, 1, 3)
+# pylint: disable=C0103
 Rate_2_3 = CodeRate(MAX_BLOCK_LENGTH, 2, 3)
 
 
@@ -156,11 +180,18 @@ __typical_starting_point = 768
 
 
 def heuristic_rate(code_rate: float) -> List[int]:
+    """
+    Heuristic for picking bits to transmit give a code rate.
+    :param code_rate: A code rate (between 0 and 1) that specifies the rate of information bits over total bits.
+    :return: List of bits to use for transmission.
+    """
     if code_rate <= 0.0 or code_rate > 1.0:
         logger.error('Invalid code rate %5.3f, it should be between 0.0 and 1.0', code_rate)
         raise ValueError('Invalid code rate')
 
     bits_to_transmit = ceil(float(MAX_BLOCK_LENGTH * 8) / float(code_rate))
+
+    # pylint: disable=R1705
     if __typical_starting_point + bits_to_transmit > BUFFER_LENGTH:
         return list(range(BUFFER_LENGTH - bits_to_transmit, BUFFER_LENGTH))
     else:
