@@ -6,7 +6,7 @@ nuget FSharp.Charting
 nuget FSharp.Collections.ParallelSeq
 nuget MathNet.Numerics
 nuget NLOG
-nuget python 3.6.8
+nuget python
 nuget RProvider
 nuget xunit
 nuget xunit.runner.console
