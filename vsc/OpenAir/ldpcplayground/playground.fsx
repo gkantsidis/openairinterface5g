@@ -1,5 +1,4 @@
-﻿#I @"../../.paket/load/net472"
-#load "MathNet.Numerics.fsx"
+﻿#r "nuget: MathNet.Numerics"
 
 open System
 
@@ -111,7 +110,8 @@ let xxx = add_gaussian_noise rng 4.0 channel_slice |> Seq.toList |> quantize 8 |
 channel_out.Initialize()
 copy (xxx, channel_out_slice)
 let r2 = decoder.Decode(channel_out, configuration, 5, data.Length * 8)
-Array.forall2 eq data r2
+sprintf "Lengths: %d %d" data.Length r2.Length
+data |> Array.iteri (fun i v -> if v <> r2[i] then printfn "Error in %d: %d <> %d" i v r2[i])
 
 let output_bit_errors =
     Seq.map2 (
@@ -166,3 +166,4 @@ let add_channel_gaussian_noise (rng : System.Random) (snr : float) (input : floa
 
 let y1 = quantize_to_normalized_channel_2 channel_slice
 let y2 = add_channel_gaussian_noise rng 4.0 y1
+

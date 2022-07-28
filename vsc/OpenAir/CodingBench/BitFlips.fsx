@@ -47,7 +47,17 @@ let inline mapi_in_place<'T> (f : int -> 'T -> 'T) (input : 'T []) : 'T[] =
 let dump_factor = 1.0
 let norm_factor = 0.8
 
-let evaluate (input : byte[]) seed errors extra iterations =
+type Configuration = {
+    DumpFactor : float
+    NormFactor : float
+}
+with
+    static member Default = {
+        DumpFactor = dump_factor
+        NormFactor = norm_factor
+    }
+
+let evaluate (strategy: Configuration) (input : byte[]) seed errors extra iterations =
     let rng = Random(seed)
 
     let start = channel_input.Start
@@ -79,9 +89,9 @@ let evaluate (input : byte[]) seed errors extra iterations =
                 if i < start || i > stop
                 then 0.0
                 else
-                    let f = if bits_in_error.Contains(i) then dump_factor else 1.0
-                    if v > 0.0 then 127.0 * f * norm_factor
-                    else -128.0 * f * norm_factor
+                    let f = if bits_in_error.Contains(i) then strategy.DumpFactor else 1.0
+                    if v > 0.0 then 127.0 * f * strategy.NormFactor
+                    else -128.0 * f * strategy.NormFactor
         )
         |> Quantizer.Array.quantize_in_place 8 temp_decoder_input.Value
 
@@ -120,24 +130,38 @@ let evaluate (input : byte[]) seed errors extra iterations =
         BitErrors   = bit_errors
     }
 
-evaluate input 13 20 300 200
+evaluate Configuration.Default input 13 20 300 200
 
 let iterations = 200
 let rng = Random(13)
 
 let result =
-    [20..10..500]
+    [1.0; 0.75; 0.50; 0.25]
     |> PSeq.collect (
-        fun errors ->
-            [200..20..8000]
-            |> PSeq.map (
-                fun overhead ->
-                    {|
-                        BitErrors   = errors
-                        ExtraBits   = overhead
-                        Results     = evaluate input (rng.Next()) errors overhead iterations
-                    |}
+        fun norm_factor ->
+            [0.9; 0.8; 0.7; 0.6; 0.5; 0.4]
+            |> PSeq.collect (
+                fun dump_factor ->
+                    let configuration = {
+                        DumpFactor = dump_factor
+                        NormFactor = norm_factor
+                    }
+
+                    [20..10..500]
+                    |> PSeq.collect (
+                        fun errors ->
+                            [200..20..8000]
+                            |> PSeq.map (
+                                fun overhead ->
+                                    {|
+                                        BitErrors   = errors
+                                        ExtraBits   = overhead
+                                        Results     = evaluate configuration input (rng.Next()) errors overhead iterations
+                                        Configuration   = configuration
+                                    |}
                     
+                            )
+                    )
             )
     )
     |> PSeq.toList
@@ -155,11 +179,12 @@ let frame =
                 Iterations      = v.Results.Iterations
                 IterationsMax   = iterations
                 CodeRatio       = v.Results.CodeRatio
-                DumpeningFactor = dump_factor
+                DumpeningFactor = v.Configuration.DumpFactor
+                NormFactor      = v.Configuration.NormFactor
             |}
     )
     |> Frame.ofRecords
 
 let output_directory = Path.Combine(__SOURCE_DIRECTORY__, "results")
-frame.SaveCsv(Path.Combine(output_directory, "inserted_bit_errors_f10_n08.csv"))
+frame.SaveCsv(Path.Combine(output_directory, "inserted_bit_errors.csv"))
 

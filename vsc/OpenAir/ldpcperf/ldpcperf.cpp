@@ -7,7 +7,7 @@
 
 int main()
 {
-    auto params = parse_decode_params();
+	const auto params = parse_decode_params();
     eval_decode(params);
 }
 

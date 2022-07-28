@@ -7,13 +7,13 @@
 extern "C"
 {
 #include "nrLDPC_encoder/defs.h"
-#include <nrLDPC_decoder\nrLDPC_init_mem.h>
-#include <nrLDPC_decoder\nrLDPC_decoder.h>
+#include "nrLDPC_decoder/nrLDPC_init_mem.h"
+#include "nrLDPC_decoder/nrLDPC_decoder.h"
 }
 
 int opp_enabled = 0;
 
-typedef struct _configuration {
+typedef struct {
     short BG;
     short Kb;
     short nrows;
@@ -29,7 +29,8 @@ Configuration find_configuration(short block_length)
         nrows = 46;             //parity check bits
         //ncols=22; //info bits
     }
-    else if (block_length <= 3840) {
+    else {
+    	// block_length <= 3840
         BG = 2;
         nrows = 42;             //parity check bits
         //ncols=10; // info bits
@@ -52,52 +53,49 @@ Configuration find_configuration(short block_length)
     return result;
 }
 
-typedef struct _ErrorStatistics {
+typedef struct {
     unsigned int errors;
     unsigned int errors_bit;
     double errors_bit_uncoded;
     unsigned int crc_misses;
 } ErrorStatistics;
 
-typedef enum _Channel {
+typedef enum {
     Ideal = 0,
     Binary_AWG = 1
 } Channel;
 
-typedef struct _AWG_Channel
+typedef struct
 {
     double SNR;
     unsigned char qbits;
 } AWG_Channel;
 
-char quantize(double D, double x, unsigned char B)
+char quantize(const double D, const double x, const unsigned char B)
 {
-    double qxd;
-    short maxlev;
-    qxd = floor(x / D);
+	double qxd = floor(x / D);
+	const auto maximum_level = static_cast<short>(1 << (B - 1));      //(char)(pow(2,B-1));
 
-    maxlev = 1 << (B - 1);      //(char)(pow(2,B-1));
+    //printf("x=%f,qxd=%f,maximum_level=%d\n",x,qxd, maximum_level);
 
-    //printf("x=%f,qxd=%f,maxlev=%d\n",x,qxd, maxlev);
+    if (qxd <= -maximum_level)
+        qxd = -maximum_level;
+    else if (qxd >= maximum_level)
+        qxd = static_cast<double>(static_cast<long long>(maximum_level) - 1);
 
-    if (qxd <= -maxlev)
-        qxd = -maxlev;
-    else if (qxd >= maxlev)
-        qxd = (long long)maxlev - 1;
-
-    return ((char)qxd);
+    return static_cast<char>(qxd);
 }
 
 int
 apply_ideal_channel(
-    unsigned char* input, int start_input, int end_input,
-    char* output, int start_output, int end_output)
+	const unsigned char* input, const int start_input, const int end_input,
+    char* output, const int start_output, const int end_output)
 {
-    short maxlev = 1 << (8 - 1);
+	constexpr short maximum_level = 1 << (8 - 1);
     for (int i = start_input, j = start_output; i < end_input && j < end_output; i++, j++)
     {
-        double value = (input[i] == 0) ? 1.0 : -1.0;
-        output[j] = (char)((input[i] == 0) ? (maxlev - 1) : -maxlev);
+        //double value = (input[i] == 0) ? 1.0 : -1.0;
+        output[j] = static_cast<char>((input[i] == 0) ? (maximum_level - 1) : -maximum_level);
     }
 
     return 0;
@@ -106,8 +104,8 @@ apply_ideal_channel(
 int
 apply_channel(
     Channel channel_type, void* channel,
-    unsigned char* input, int start_input, int end_input,
-    char* output, int start_output, int end_output
+    const unsigned char* input, const int start_input, const int end_input,
+    char* output, const int start_output, const int end_output
 )
 {
     switch (channel_type)
@@ -121,12 +119,12 @@ apply_channel(
     case Binary_AWG:
         fprintf(stderr, "Not implemented\n");
         abort();
-        break;
+        //break;
 
-    default:
+    default:  // NOLINT(clang-diagnostic-covered-switch-default)
         fprintf(stderr, "Unknown channel");
         abort();
-        break;
+        //break;
     }
 }
 
@@ -141,7 +139,7 @@ short find_Zc(short block_length, short Kb)
     short Zc = 0;
 
     for (int i1 = 0; i1 < 51; i1++) {
-        if (lift_size[i1] >= (double)block_length / Kb) {
+        if (lift_size[i1] >= static_cast<double>(block_length) / Kb) {
             Zc = lift_size[i1];
             //printf("%d\n",Zc);
             break;
@@ -151,44 +149,50 @@ short find_Zc(short block_length, short Kb)
     return Zc;
 }
 
-int find_R_ind(int nom_rate, int denom_rate, short BG)
+int find_R_ind(int numerator_rate, int denominator_rate, short BG)
 {
     int R_ind = 0;
 
-    if (nom_rate == 1)
-        if (denom_rate == 5)
+    if (numerator_rate == 1) {
+        if (denominator_rate == 5) {
             if (BG == 2)
                 R_ind = 0;
             else
                 printf("Not supported");
-        else if (denom_rate == 3)
+        }
+        else if (denominator_rate == 3)
             R_ind = 1;
-        else if (denom_rate == 2)
+        else if (denominator_rate == 2) {  // NOLINT(bugprone-branch-clone)
             //R_ind = 3;
             printf("Not supported");
+        }
         else
             printf("Not supported");
-
-    else if (nom_rate == 2)
-        if (denom_rate == 5)
+    }
+    else if (numerator_rate == 2)
+        if (denominator_rate == 5) {  // NOLINT(bugprone-branch-clone)
             //R_ind = 2;
             printf("Not supported");
-        else if (denom_rate == 3)
+        }
+        else if (denominator_rate == 3)
             R_ind = 4;
         else
             printf("Not supported");
 
-    else if ((nom_rate == 22) && (denom_rate == 30))
+    else if ((numerator_rate == 22) && (denominator_rate == 30)) {  // NOLINT(bugprone-branch-clone)
         //R_ind = 5;
         printf("Not supported");
-    else if ((nom_rate == 22) && (denom_rate == 27))
+    }
+    else if ((numerator_rate == 22) && (denominator_rate == 27)) {
         //R_ind = 6;
         printf("Not supported");
-    else if ((nom_rate == 22) && (denom_rate == 25))
+    }
+    else if ((numerator_rate == 22) && (denominator_rate == 25)) {
         if (BG == 1)
             R_ind = 7;
         else
             printf("Not supported");
+    }
     else
         printf("Not supported");
 
@@ -197,22 +201,22 @@ int find_R_ind(int nom_rate, int denom_rate, short BG)
 
 #define malloc16(x) memalign(32, x)
 
-void initialize_random(unsigned char* input, const int block_length, unsigned int seed)
+void initialize_random(unsigned char* input, const int block_length, const unsigned int seed)
 {
     srand(seed);
     for (int i = 0; i < block_length / 8; i++) {
-        input[i] = (unsigned char)rand();
+        input[i] = static_cast<unsigned char>(rand());  // NOLINT(concurrency-mt-unsafe)
     }
 }
 
-void initialize_constant(unsigned char* input, const int block_length, unsigned char value)
+void initialize_constant(unsigned char* input, const int block_length, const unsigned char value)
 {
     for (int i = 0; i < block_length / 8; i++) {
         input[i] = value;
     }
 }
 
-void initialize_pattern(unsigned char* input, const int block_length, unsigned char periodicity)
+void initialize_pattern(unsigned char* input, const int block_length, const unsigned char periodicity)
 {
     unsigned char value = 0;
     for (int i = 0; i < block_length / 8; i++, value++) {
@@ -226,17 +230,19 @@ void initialize_pattern(unsigned char* input, const int block_length, unsigned c
 
 int main()
 {
-    int n_segments = 1;
-    int nom_rate = 1;
-    int denom_rate = 3;
-    short No_iteration = 5;
+    // constexpr int n_segments = 1;
+    constexpr int numerator_rate = 1;
+    constexpr int denominator_rate = 3;
+    constexpr short max_number_of_iterations = 5;
 
     int code_rate_vec[8] = { 15, 13, 25, 12, 23, 34, 56, 89 };
 
-    short block_length = 8448;
+    constexpr short block_length = 8448;
+    constexpr auto encoded_block_length = block_length * denominator_rate / numerator_rate;
+
     auto p_nrLDPC_procBuf = nrLDPC_init_mem();
 
-    t_nrLDPC_time_stats decoder_profiler;
+    t_nrLDPC_time_stats decoder_profiler{};
     t_nrLDPC_time_stats* p_decoder_profiler = &decoder_profiler;
 
     reset_meas(&decoder_profiler.llr2llrProcBuf);
@@ -250,51 +256,45 @@ int main()
     reset_meas(&decoder_profiler.llrRes2llrOut);
     reset_meas(&decoder_profiler.llr2bit);
 
-    unsigned char* test_input = NULL;
-    unsigned char* channel_input = NULL;
-    char* channel_output_fixed = NULL;
-    unsigned char* estimated_output = NULL;
+    unsigned char* test_input = nullptr;
+    unsigned char* channel_input = nullptr;
+    char* channel_output_fixed = nullptr;
+    unsigned char* estimated_output = nullptr;
 
     Configuration configuration = find_configuration(block_length);
-    int R_ind = find_R_ind(nom_rate, denom_rate, configuration.BG);
+    int R_ind = find_R_ind(numerator_rate, denominator_rate, configuration.BG);
 
     ErrorStatistics errors = { 0, 0, 0, 0 };
 
-    srand(14);
+    srand(14);  // NOLINT(cert-msc51-cpp)
 
     short Zc = find_Zc(block_length, configuration.Kb);
 
     t_nrLDPC_dec_params decParams;
-    decParams.BG = configuration.BG;
-    decParams.Z = Zc;
-    decParams.R = code_rate_vec[R_ind]; //13;
-    decParams.numMaxIter = No_iteration;
+    decParams.BG = static_cast<uint8_t>(configuration.BG);
+    decParams.Z = static_cast<uint16_t>(Zc);
+    decParams.R = static_cast<uint8_t>(code_rate_vec[R_ind]); //13;
+    decParams.numMaxIter = max_number_of_iterations;
     decParams.outMode = nrLDPC_outMode_BIT;
 
-    int no_punctured_columns =
-        (int)((configuration.nrows - 2) * Zc + block_length -
-            block_length * (1 /
-            ((float)nom_rate / (float)denom_rate))) / Zc
-        ;
+    int no_punctured_columns = ( (configuration.nrows - 2) * Zc + block_length - encoded_block_length ) / Zc;
         
-    int removed_bit = (configuration.nrows - no_punctured_columns - 2) * Zc +
-        block_length -
-        (int)(block_length / ((float)nom_rate / (float)denom_rate));
+    int removed_bit = (configuration.nrows - no_punctured_columns - 2) * Zc + block_length - encoded_block_length;
 
-    test_input = (unsigned char*)malloc16(sizeof(unsigned char) * block_length / 8);
-    channel_input = (unsigned char*)malloc16(sizeof(unsigned char) * 68 * 384);
-    channel_output_fixed = (char*)malloc16(sizeof(char) * 68 * 384);
-    estimated_output = (unsigned char*)malloc16(sizeof(unsigned char) * block_length);
+    test_input = static_cast<unsigned char*>(malloc16(sizeof(unsigned char) * block_length / 8));
+    channel_input = static_cast<unsigned char*>(malloc16(sizeof(unsigned char) * 68 * 384));
+    channel_output_fixed = static_cast<char*>(malloc16(sizeof(char) * 68 * 384));
+    estimated_output = static_cast<unsigned char*>(malloc16(sizeof(unsigned char) * block_length));
 
     assert(test_input != NULL);
     assert(channel_input != NULL);
     assert(channel_output_fixed != NULL);
     assert(estimated_output != NULL);
 
-    for (size_t attempts = 0; attempts < 1; attempts++)
+    for (auto attempts = 0; attempts < 10; attempts++)
     {
-        //initialize_random(test_input, block_length, attempts);
-        initialize_constant(test_input, block_length, 0);
+        initialize_random(test_input, block_length, attempts);
+        //initialize_constant(test_input, block_length, 0);
         //initialize_constant(test_input, block_length, 5);
         //initialize_pattern(test_input, block_length, 2);
 
@@ -308,17 +308,17 @@ int main()
             (configuration.Kb + configuration.nrows - no_punctured_columns) * decParams.Z - removed_bit;
 
         int uncoded_errors = apply_channel(
-            Ideal, NULL,
+            Ideal, nullptr,
             channel_input, 0, last_bit_pos - 2 * decParams.Z,
             channel_output_fixed, 2 * decParams.Z, last_bit_pos
         );
 
         errors.errors_bit_uncoded += uncoded_errors;
 
-        int n_iter = nrLDPC_decoder(
+        int number_of_iterations = nrLDPC_decoder(
             &decParams,
-            (int8_t*)channel_output_fixed,
-            (int8_t*)estimated_output,
+            reinterpret_cast<int8_t*>(channel_output_fixed),
+            reinterpret_cast<int8_t*>(estimated_output),
             p_nrLDPC_procBuf, p_decoder_profiler);
 
         bool has_segment_error = false;
@@ -333,6 +333,8 @@ int main()
             }
         }
         if (has_segment_error) errors.errors++;
+
+        printf("At attempt %d: Finished after %d iterations with %d errors\n", attempts, number_of_iterations, errors.errors);
     }
 
     _aligned_free(test_input);

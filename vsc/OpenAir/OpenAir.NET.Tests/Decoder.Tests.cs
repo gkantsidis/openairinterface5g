@@ -1,28 +1,25 @@
 ﻿
 namespace OpenAir.NET.Tests
 {
-    using System;
-    using System.IO;
     using Xunit;
-    using OpenAir.LDPC;
-    using OpenAir.Bench;
-    using System.Runtime.InteropServices;
+    using LDPC;
+    using Bench;
 
     public class Decoder
     {
         [Fact]
         public void DecodeAllZero()
         {
-            var levels = 8;
-            var maximum_iterations = 5;
+            const int levels = 8;
+            const int maximumIterations = 5;
 
-            var size_in_bytes = 1056;
-            var nominator = 1;
-            var denominator = 3;
+            const int sizeInBytes = 1056;
+            const int numerator = 1;
+            const int denominator = 3;
 
-            var data = Sources.Constant.Zero(size_in_bytes);
+            var data = Sources.Constant.Zero(sizeInBytes);
 
-            var configuration = Configuration.MkFromBlockLength(size_in_bytes, nominator, denominator);
+            var configuration = Configuration.MkFromBlockLength(sizeInBytes, numerator, denominator);
 
             var encoder = new SimpleEncoder();
             var decoder = new OpenAir.LDPC.Decoder();
@@ -33,31 +30,30 @@ namespace OpenAir.NET.Tests
             var channel_out_slice = configuration.SliceOutputFromChannel(channel_out, data.Length);
 
             Quantizer.Binary.Map.Apply(levels, channel_in_slice, channel_out_slice);
-            var result = decoder.Decode(channel_out, configuration, maximum_iterations, size_in_bytes);
+            var result = decoder.Decode(channel_out, configuration, maximumIterations, sizeInBytes);
 
             Assert.Equal(data.Length, result.Length);
-            for (int i = 0; i < data.Length; i++)
+            for (var i = 0; i < data.Length; i++)
             {
                 Assert.True(
                     data[i] == result[i],
-                    string.Format("Data differ in position {0}; expected {1} got {2}",
-                    i, data[i], result[i]));
+                    $"Data differ in position {i}; expected {data[i]} got {result[i]}");
             }
         }
 
         [Fact]
         public void DecodeAllZeroSmall()
         {
-            var levels = 8;
-            var maximum_iterations = 5;
+            const int levels = 8;
+            const int maximumIterations = 5;
 
-            var size_in_bytes = 64;
-            var nominator = 1;
-            var denominator = 3;
+            const int sizeInBytes = 64;
+            const int numerator = 1;
+            const int denominator = 3;
 
-            var data = Sources.Constant.Zero(size_in_bytes);
+            var data = Sources.Constant.Zero(sizeInBytes);
 
-            var configuration = Configuration.MkFromBlockLength(size_in_bytes, nominator, denominator);
+            var configuration = Configuration.MkFromBlockLength(sizeInBytes, numerator, denominator);
 
             var encoder = new SimpleEncoder();
             var decoder = new OpenAir.LDPC.Decoder();
@@ -68,31 +64,30 @@ namespace OpenAir.NET.Tests
             var channel_out_slice = configuration.SliceOutputFromChannel(channel_out, data.Length);
 
             Quantizer.Binary.Map.Apply(levels, channel_in_slice, channel_out_slice);
-            var result = decoder.Decode(channel_out, configuration, maximum_iterations, size_in_bytes);
+            var result = decoder.Decode(channel_out, configuration, maximumIterations, sizeInBytes);
 
             Assert.Equal(data.Length, result.Length);
-            for (int i = 0; i < data.Length; i++)
+            for (var i = 0; i < data.Length; i++)
             {
                 Assert.True(
                     data[i] == result[i],
-                    string.Format("Data differ in position {0}; expected {1} got {2}",
-                    i, data[i], result[i]));
+                    $"Data differ in position {i}; expected {data[i]} got {result[i]}");
             }
         }
 
         [Fact]
         public void DecodeAllZeroOneByte()
         {
-            var levels = 8;
-            var maximum_iterations = 5;
+            const int levels = 8;
+            const int maximumIterations = 5;
 
-            var size_in_bytes = 1;
-            var nominator = 1;
-            var denominator = 3;
+            const int sizeInBytes = 1;
+            const int numerator = 1;
+            const int denominator = 3;
 
-            var data = Sources.Constant.Zero(size_in_bytes);
+            var data = Sources.Constant.Zero(sizeInBytes);
 
-            var configuration = Configuration.MkFromBlockLength(size_in_bytes, nominator, denominator);
+            var configuration = Configuration.MkFromBlockLength(sizeInBytes, numerator, denominator);
 
             var encoder = new SimpleEncoder();
             var decoder = new OpenAir.LDPC.Decoder();
@@ -103,30 +98,29 @@ namespace OpenAir.NET.Tests
             var channel_out_slice = configuration.SliceOutputFromChannel(channel_out, data.Length);
 
             Quantizer.Binary.Map.Apply(levels, channel_in_slice, channel_out_slice);
-            var result = decoder.Decode(channel_out, configuration, maximum_iterations, size_in_bytes);
+            var result = decoder.Decode(channel_out, configuration, maximumIterations, sizeInBytes);
 
             Assert.Equal(data.Length, result.Length);
-            for (int i = 0; i < data.Length; i++)
+            for (var i = 0; i < data.Length; i++)
             {
                 Assert.True(
                     data[i] == result[i],
-                    string.Format("Data differ in position {0}; expected {1} got {2}",
-                    i, data[i], result[i]));
+                    $"Data differ in position {i}; expected {data[i]} got {result[i]}");
             }
         }
 
         [Fact]
         public void DecodeAllOne()
         {
-            int nominator = 1;
-            int denominator = 3;
-            int size_in_bytes = 1056;
+            const int numerator = 1;
+            const int denominator = 3;
+            const int sizeInBytes = 1056;
 
-            var levels = 8;
-            var maximum_iterations = 5;
+            const int levels = 8;
+            const int maximumIterations = 5;
 
-            var data = Sources.Constant.One(size_in_bytes);
-            var configuration = Configuration.MkFromBlockLength(size_in_bytes, nominator, denominator);
+            var data = Sources.Constant.One(sizeInBytes);
+            var configuration = Configuration.MkFromBlockLength(sizeInBytes, numerator, denominator);
 
             var encoder = new SimpleEncoder();
             var decoder = new OpenAir.LDPC.Decoder();
@@ -137,31 +131,30 @@ namespace OpenAir.NET.Tests
             var channel_out_slice = configuration.SliceOutputFromChannel(channel_out, data.Length);
 
             Quantizer.Binary.Map.Apply(levels, channel_in_slice, channel_out_slice);
-            var result = decoder.Decode(channel_out, configuration, maximum_iterations, size_in_bytes);
+            var result = decoder.Decode(channel_out, configuration, maximumIterations, sizeInBytes);
 
             Assert.Equal(data.Length, result.Length);
             for (int i = 0; i < data.Length; i++)
             {
                 Assert.True(
                     data[i] == result[i],
-                    string.Format("Data differ in position {0}; expected {1} got {2}",
-                    i, data[i], result[i]));
+                    $"Data differ in position {i}; expected {data[i]} got {result[i]}");
             }
         }
 
         [Fact]
         public void Block128Test()
         {
-            var levels = 8;
-            var maximum_iterations = 5;
+            const int levels = 8;
+            const int maximumIterations = 5;
 
-            var size_in_bytes = 128;
-            var nominator = 1;
-            var denominator = 3;
-            var seed = 50;
+            const int sizeInBytes = 128;
+            const int numerator = 1;
+            const int denominator = 3;
+            const int seed = 50;
 
-            var data = Sources.Random.Make(size_in_bytes, seed);
-            var configuration = Configuration.MkFromBlockLength(size_in_bytes, nominator, denominator);
+            var data = Sources.Random.Make(sizeInBytes, seed);
+            var configuration = Configuration.MkFromBlockLength(sizeInBytes, numerator, denominator);
 
             var encoder = new SimpleEncoder();
             var decoder = new OpenAir.LDPC.Decoder();
@@ -172,15 +165,14 @@ namespace OpenAir.NET.Tests
             var channel_out_slice = configuration.SliceOutputFromChannel(channel_out, data.Length);
 
             Quantizer.Binary.Map.Apply(levels, channel_in_slice, channel_out_slice);
-            var result = decoder.Decode(channel_out, configuration, maximum_iterations, size_in_bytes);
+            var result = decoder.Decode(channel_out, configuration, maximumIterations, sizeInBytes);
 
             Assert.Equal(data.Length, result.Length);
-            for (int i = 0; i < data.Length; i++)
+            for (var i = 0; i < data.Length; i++)
             {
                 Assert.True(
                     data[i] == result[i],
-                    string.Format("Data differ in position {0}; expected {1} got {2}",
-                    i, data[i], result[i]));
+                    $"Data differ in position {i}; expected {data[i]} got {result[i]}");
             }
         }
 
@@ -199,13 +191,13 @@ namespace OpenAir.NET.Tests
         [InlineData(44, 2, 3, 256)]
         [InlineData(44, 1, 3, 128)]
         [InlineData(44, 2, 3, 128)]
-        public void RandomBlockTest(int seed, int nominator, int denominator, int size_in_bytes)
+        public void RandomBlockTest(int seed, int nominator, int denominator, int sizeInBytes)
         {
-            var levels = 8;
-            var maximum_iterations = 5;
+            const int levels = 8;
+            const int maximumIterations = 5;
 
-            var data = Sources.Random.Make(size_in_bytes, seed);
-            var configuration = Configuration.MkFromBlockLength(size_in_bytes, nominator, denominator);
+            var data = Sources.Random.Make(sizeInBytes, seed);
+            var configuration = Configuration.MkFromBlockLength(sizeInBytes, nominator, denominator);
 
             var encoder = new SimpleEncoder();
             var decoder = new OpenAir.LDPC.Decoder();
@@ -216,15 +208,14 @@ namespace OpenAir.NET.Tests
             var channel_out_slice = configuration.SliceOutputFromChannel(channel_out, data.Length);
 
             Quantizer.Binary.Map.Apply(levels, channel_in_slice, channel_out_slice);
-            var result = decoder.Decode(channel_out, configuration, maximum_iterations, size_in_bytes);
+            var result = decoder.Decode(channel_out, configuration, maximumIterations, sizeInBytes);
 
             Assert.Equal(data.Length, result.Length);
-            for (int i = 0; i < data.Length; i++)
+            for (var i = 0; i < data.Length; i++)
             {
                 Assert.True(
                     data[i] == result[i],
-                    string.Format("Data differ in position {0}; expected {1} got {2}",
-                    i, data[i], result[i]));
+                    $"Data differ in position {i}; expected {data[i]} got {result[i]}");
             }
         }
     }

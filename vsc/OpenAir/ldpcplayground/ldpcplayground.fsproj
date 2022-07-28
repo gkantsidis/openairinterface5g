@@ -49,6 +49,7 @@
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Program.fs" />
     <None Include="playground.fsx" />
+    <None Include="encoding_matrix.fsx" />
     <None Include="App.config" />
     <Content Include="packages.config" />
   </ItemGroup>
